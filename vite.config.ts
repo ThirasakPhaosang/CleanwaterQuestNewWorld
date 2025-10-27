@@ -18,6 +18,16 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      // Build as Multi-Page App so menu.html / game.html ถูกส่งออกไปด้วย
+      build: {
+        rollupOptions: {
+          input: {
+            main: path.resolve(__dirname, 'index.html'),
+            menu: path.resolve(__dirname, 'menu.html'),
+            game: path.resolve(__dirname, 'game.html'),
+          }
+        }
       }
     };
 });
