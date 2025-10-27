@@ -1,0 +1,365 @@
+:root {
+  --primary-bg: #010410;
+  --secondary-bg: #0a142c;
+  --highlight-color: #00f6ff;
+  --text-color: #f0f8ff;
+  --glow-color: rgba(0, 246, 255, 0.7);
+  --glow-color-soft: rgba(0, 246, 255, 0.3);
+  --glow-color-dark: rgba(0, 246, 255, 0.15);
+  --highlight-glow: #7fffd4; /* Aquamarine for a brighter pop */
+  /* New Thematic "Bioluminescent" color scheme for the transition */
+  --transition-color-deep: #081a3d;   /* Deep Teal/Blue */
+  --transition-color-light: #00c4cc; /* Vibrant Cyan */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--primary-bg);
+}
+
+#app-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-color);
+  overflow: hidden;
+  perspective: 1000px;
+}
+
+
+
+/* --- New "Bioluminescent Upwelling" Page Transition --- */
+#page-transition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none;
+  visibility: hidden;
+  overflow: hidden;
+}
+
+#page-transition.is-active {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.wave-svg-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* MODIFIED: Increased height and changed to vh for robustness */
+    height: 110vh; 
+    /* MODIFIED: Start fully below the screen using vh */
+    transform: translateY(110vh);
+    transition: transform 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#page-transition.is-active .wave-svg-container {
+    /* MODIFIED: Move to final position */
+    transform: translateY(0);
+}
+
+.wave-svg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150vh;
+}
+
+/* MODIFIED: Removed fill/opacity, added blend modes for realism */
+.wave-2, .wave-3 {
+    mix-blend-mode: screen; /* Additive light blending for a glowing effect */
+}
+
+/* Subtle, continuous flowing animation for each wave */
+@keyframes wave-flow {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-25px); }
+  100% { transform: translateX(0); }
+}
+
+/* Apply animations with different timings for a parallax effect */
+.wave-1 {
+    animation: wave-flow 12s ease-in-out infinite;
+    bottom: -10px; /* Sits slightly lower for depth */
+}
+.wave-2 {
+    animation: wave-flow 15s ease-in-out infinite reverse;
+    bottom: -5px;
+}
+.wave-3 {
+    animation: wave-flow 10s ease-in-out infinite;
+}
+
+
+/* Hidden SVG for the distortion filter definition */
+.distortion-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+
+/* --- Underwater Background Effects --- */
+.underwater-bg {
+  position: absolute;
+  top: -50px;
+  left: -50px;
+  width: calc(100% + 100px);
+  height: calc(100% + 100px);
+  background: radial-gradient(circle at 50% 0%, var(--secondary-bg), var(--primary-bg) 70%);
+  z-index: 0;
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+#bioluminescent-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+
+/* --- UI Elements --- */
+#ui-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3.5rem;
+  padding: 1rem;
+  animation: gentle-float 8s ease-in-out infinite;
+}
+
+@keyframes gentle-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.game-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(2.5rem, 10vw, 6rem);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-color);
+  text-shadow: 0 0 5px var(--glow-color-soft), 0 0 10px var(--glow-color-dark);
+  padding-left: 0.2em; /* Adjust for letter-spacing */
+  cursor: default;
+  display: flex; /* Required for span animations to work well together */
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5em;
+  line-height: 1.1;
+  width: 100%;
+}
+
+.word {
+  display: inline-flex;
+}
+
+.game-title span {
+  display: inline-block;
+  opacity: 0;
+  animation: 
+    letter-reveal 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+    gentle-undulate 5s ease-in-out infinite;
+  animation-delay: var(--reveal-delay), var(--undulate-delay);
+  position: relative;
+  color: transparent;
+  background: linear-gradient(45deg, var(--highlight-color), var(--text-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* --- New "Glowing Touch" Hover Effect --- */
+.game-title span:hover {
+  transform: scale(1.15) translateY(-5px);
+  text-shadow: 0 0 10px var(--glow-color), 0 0 20px var(--glow-color);
+}
+
+
+@keyframes gentle-undulate {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes letter-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.login-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 350px;
+  opacity: 0;
+  animation: options-fade-in 0.6s 1s forwards; /* Delayed to start after title animation */
+}
+
+@keyframes options-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-button {
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  position: relative;
+  background-color: rgba(10, 20, 44, 0.5);
+  border: none;
+  color: var(--text-color);
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  z-index: 1;
+  border-radius: 50px; /* Capsule Shape */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 15px var(--glow-color-dark);
+  animation: soft-pulse 4s ease-in-out infinite;
+}
+
+@keyframes soft-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px var(--glow-color-dark);
+  }
+  50% {
+    box-shadow: 0 0 25px var(--glow-color-soft);
+  }
+}
+
+.login-button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), var(--glow-color-soft) 0%, transparent 40%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  z-index: 0;
+  border-radius: 50px;
+}
+
+.login-button:hover::before {
+  opacity: 1;
+}
+
+.login-button:hover,
+.login-button:focus {
+  outline: none;
+  transform: translateY(-4px); /* Lift effect */
+  box-shadow: 0 8px 30px var(--glow-color-dark);
+}
+
+.login-button:active {
+  transform: translateY(0px); /* Press down effect */
+  box-shadow: 0 0 15px var(--glow-color-dark);
+}
+
+.button-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* --- Mobile & Responsiveness Tweaks --- */
+@media (max-width: 768px), (max-height: 650px) {
+  #ui-container {
+    gap: 2.5rem; /* Reduce gap on smaller/shorter screens */
+  }
+  .game-title {
+    letter-spacing: 0.1em; /* Tighter letter spacing on mobile */
+    padding-left: 0.1em;
+    gap: 0.25em;
+  }
+}
+
+/* ADDED: Landscape Fix === Landscape & small-height support (login) === */
+@media (orientation: landscape) and (max-height: 520px) {
+  #ui-container {
+    gap: 1.25rem;
+    padding: 0.5rem 1rem;
+  }
+  .game-title {
+    font-size: clamp(1.4rem, 6vw, 3rem);
+    letter-spacing: 0.08em;
+    line-height: 1.05;
+  }
+  .login-options {
+    max-width: min(60vw, 520px);
+    gap: 0.75rem;
+  }
+  .login-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  .icon { width: 20px; height: 20px; }
+  .underwater-bg { transform: none !important; }
+}
+
+@media (orientation: landscape) and (max-height: 400px) {
+  #ui-container { transform: scale(0.9); }
+  .game-title { font-size: clamp(1.2rem, 5.5vw, 2.6rem); }
+  .login-options { max-width: 56vw; }
+}

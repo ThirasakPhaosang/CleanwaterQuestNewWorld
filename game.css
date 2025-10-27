@@ -1,0 +1,751 @@
+/*
+  ไฟล์ game.css ได้รับการอัปเดตเพื่อแก้ไขปัญหา UI ทับซ้อน
+  - ลบ `.sorting-active` และ `::before` ที่ไม่จำเป็นออก
+  - เพิ่ม `.sorting-overlay` ใหม่เพื่อสร้าง modal ที่ครอบคลุมทั้งหน้าจอพร้อม backdrop-filter
+  - เพิ่ม `main.is-sorting` selector เพื่อซ่อนองค์ประกอบที่ไม่ต้องการจาก CollectionGame (เช่น เรือ, ปุ่ม) เมื่ออยู่ในหน้าคัดแยกขยะ
+  การเปลี่ยนแปลงเหล่านี้ช่วยแก้ปัญหาการแสดงผลและทำให้สามารถโต้ตอบกับหน้าคัดแยกขยะได้อย่างถูกต้อง
+*/
+:root {
+  --primary-bg: #010410;
+  --shadow-opacity: 0.2;
+  --hud-bg: rgba(23, 37, 84, 0.7);
+  --hud-border: rgba(59, 130, 246, 0.5);
+  --success-color: #34d399;
+  --fail-color: #fb7185;
+  --water-level-vh: 35vh; /* NEW: Water level variable */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  /* Use dynamic viewport to truly fill screen on mobile */
+  height: 100dvh;
+  height: 100vh; /* fallback */
+  width: 100vw;
+  overflow: hidden;
+  font-family: 'Kanit','Noto Sans Thai','Noto Sans',system-ui,sans-serif;
+  background-color: var(--primary-bg);
+  color: #f0f8ff;
+}
+
+.game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* NEW: Sky to water gradient background */
+  background: linear-gradient(to bottom, #aee1ff 0%, #6fc6ff calc(var(--water-level-vh) - 20px), #0a516f var(--water-level-vh), #083a50 100%);
+}
+
+.loading-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #010410;
+  color: #f0f8ff;
+  font-size: 1.5rem;
+  z-index: 999;
+}
+
+.collection-game-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: none;
+    touch-action: none; /* prevent page panning on mobile */
+}
+
+/* --- NEW: Dynamic Cursor --- */
+.cursor-dot {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease;
+    z-index: 1000;
+}
+.cursor-ring {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease, border 0.3s ease;
+    z-index: 1000;
+}
+.collection-game-container.is-hook-active .cursor-dot {
+    background-color: var(--success-color);
+}
+.collection-game-container.is-hook-active .cursor-ring {
+    width: 60px;
+    height: 60px;
+    border: 2px solid var(--success-color);
+}
+
+.game-world {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    will-change: transform;
+    z-index: 10;
+}
+
+/* --- NEW: 3D Wave Styles --- */
+#game-waves {
+    position: fixed;
+    top: calc(var(--water-level-vh) - 150px); /* Position waves visually at the water line */
+    left: 0;
+    width: 100%;
+    height: 320px; /* SVG height */
+    z-index: 15; /* Above game world, below boat */
+    pointer-events: none;
+}
+.wave-svg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 320px;
+}
+.wave-2, .wave-3 {
+    mix-blend-mode: screen; /* Additive light blending */
+}
+@keyframes wave-flow {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-25px); }
+  100% { transform: translateX(0); }
+}
+.wave-1 { animation: wave-flow 12s ease-in-out infinite; }
+.wave-2 { animation: wave-flow 15s ease-in-out infinite reverse; }
+.wave-3 { animation: wave-flow 10s ease-in-out infinite; }
+
+
+.boat-svg {
+    position: fixed;
+    width: 200px;
+    height: 150px;
+    z-index: 20; /* Above the waves */
+    pointer-events: none;
+    filter: drop-shadow(0 8px 15px rgba(0,0,0,var(--shadow-opacity)));
+    transform-origin: center 80%;
+    will-change: transform;
+    transition: filter 1s linear;
+}
+#ship-hull { stroke: #fff; stroke-width: 2; }
+#flag-canvas { stroke: #fff; stroke-width: 1.5; }
+
+.line-svg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+
+.hook { 
+    position: absolute; top: 0; left: 0; 
+    width: 30px; height: 30px; 
+    transform: translate(-50%, -50%); 
+    z-index: 31; pointer-events: none; 
+    font-size: 30px;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.world-object {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+    pointer-events: none;
+    /* Lighter shadow for performance */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    /* Avoid layout/paint leaking out of the element */
+    contain: layout paint style;
+    /* Skip rendering when offscreen */
+    content-visibility: auto;
+    contain-intrinsic-size: 32px 32px;
+}
+.collectible-trash { font-size: 2.5rem; z-index: 11; text-shadow: 0 0 8px rgba(255,255,255,0.35), 0 2px 6px rgba(0,0,0,0.45); filter: saturate(1.25) brightness(1.2) drop-shadow(0 0 8px rgba(255,255,255,0.35)); }
+
+
+#game-hud {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 50;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: calc(0.5rem + env(safe-area-inset-top)) calc(1rem + env(safe-area-inset-right)) 0 calc(1rem + env(safe-area-inset-left));
+    pointer-events: none;
+    font-family: 'Lilita One', cursive;
+}
+#game-hud > * { pointer-events: auto; }
+.hud-element-wrapper {
+    background-color: var(--hud-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--hud-border);
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.hud-element {
+    color: white; text-shadow: 2px 2px 3px rgba(0,0,0,0.5); font-size: 1.25rem;
+    display: flex; align-items: center; gap: 0.75rem;
+}
+.hud-element span {
+    font-family: 'Kanit','Noto Sans Thai','Noto Sans',system-ui,sans-serif;
+    font-weight: 600;
+}
+.capacity-bar-bg { width: 120px; height: 1.25rem; background-color: rgba(0,0,0,0.5); border-radius: 10px; overflow: hidden; border: 1px solid var(--hud-border); }
+.capacity-bar-fill { height: 100%; background: linear-gradient(to bottom, #aee1ff 0%, #6fc6ff calc(var(--water-level-vh) - 20px), #0a516f var(--water-level-vh), #083a50 100%); border-radius: 10px; transition: width 0.3s ease; }
+
+.game-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5); 
+    z-index: 200; display: flex;
+    justify-content: center; align-items: center; 
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+.game-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.popup-dialog {
+    background: linear-gradient(to bottom, #aee1ff 0%, #6fc6ff calc(var(--water-level-vh) - 20px), #0a516f var(--water-level-vh), #083a50 100%);
+    border: 1px solid var(--glow-color-dark); border-radius: 24px; padding: 2rem;
+    width: 90%; max-width: 500px; text-align: center;
+    display: flex; flex-direction: column; gap: 1.5rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    transform: scale(0.9);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+}
+.game-overlay.visible .popup-dialog {
+    transform: scale(1);
+    opacity: 1;
+}
+.popup-dialog h2 { font-size: 2.5rem; font-family: 'Lilita One', cursive; color: var(--success-color); }
+.results-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    background: rgba(0,0,0,0.2);
+    padding: 1rem;
+    border-radius: 12px;
+}
+.summary-item { font-size: 1.1rem; font-weight: 600; }
+.summary-item .label { display: block; font-size: 0.8rem; color: var(--text-color-dim); margin-bottom: 0.25rem; }
+.summary-item .value { font-size: 1.4rem; }
+.popup-buttons { display: flex; gap: 1rem; justify-content: center; }
+.popup-dialog button {
+    padding: 0.8rem 1.5rem; border-radius: 12px;
+    font-family: 'Kanit','Noto Sans Thai','Noto Sans',system-ui,sans-serif; font-size: 1.2rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s ease;
+}
+.btn-primary { background-color: #34d399; color: var(--primary-bg); border: none; }
+.btn-secondary { background-color: var(--hud-bg); color: var(--text-color); border: 1px solid var(--hud-border); }
+
+.tutorial-tooltip {
+    position: fixed; 
+    left: 50%;
+    bottom: calc(12px + env(safe-area-inset-bottom)); 
+    transform: translate(-50%, 0);
+    background-color: var(--hud-bg); 
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--hud-border); 
+    border-radius: 14px;
+    padding: 0.6rem 1rem; 
+    font-size: clamp(0.9rem, 2.5vw, 1rem); 
+    font-weight: 800;
+    text-align: center; 
+    z-index: 150; 
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    opacity: 1; 
+    animation: none; 
+    pointer-events: none; 
+    user-select: none;
+    max-width: min(92vw, 720px);
+}
+/* animation removed for persistent hint */
+
+.sorting-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(1, 4, 16, 0.7);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+main {
+    width: 100vw;
+    height: 100dvh; /* true viewport height */
+    height: 100vh;  /* fallback */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000; /* Letterbox color */
+}
+
+.scaled-container {
+    position: relative;
+    transform-origin: top left;
+    width: 100vw; 
+    height: 100vh;
+    overflow: hidden;
+}
+
+main.is-sorting .boat-svg,
+main.is-sorting .line-svg,
+main.is-sorting .hook,
+main.is-sorting .tutorial-tooltip,
+main.is-sorting #game-hud,
+main.is-sorting .cursor-dot,
+main.is-sorting .cursor-ring {
+    display: none;
+}
+
+/* --- NEW SORTING GAME LAYOUT (PORTRAIT) --- */
+.sorting-game-frame {
+    width: 100%;
+    max-width: 900px;
+    height: 95%;
+    max-height: 800px;
+    background: #0d1a2e;
+    border-radius: 2rem;
+    box-shadow: inset 0 0 0 2px #3b82f6, 0 10px 40px rgba(0,0,0,0.5);
+    padding: clamp(1rem, 3vh, 1.5rem);
+    border: 2px solid rgba(59, 130, 246, 0.5);
+    position: relative;
+    
+    /* NEW: Ergonomic Portrait Layout */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto; /* Header, Fact (flexible), Bins, Inventory */
+    grid-template-areas:
+        "header"
+        "fact"
+        "bins"
+        "inventory";
+    gap: clamp(0.75rem, 2vh, 1rem);
+}
+
+.sorting-header {
+    grid-area: header;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+}
+
+.sorting-bins-grid {
+    grid-area: bins;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: clamp(0.75rem, 3vw, 1rem);
+    width: 100%;
+    max-width: 420px;
+    justify-self: center;
+}
+
+.eco-fact-box {
+    grid-area: fact;
+    justify-self: center;
+    align-self: center; /* Vertically center in the flexible space */
+    width: 100%;
+    max-width: 500px;
+    background-color: rgba(0,0,0,0.5);
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+    text-align: center;
+    color: var(--text-color-dim);
+}
+.eco-fact-box strong { color: var(--success-color); }
+
+.inventory-belt {
+    grid-area: inventory;
+    flex-shrink: 0;
+    background: rgba(12, 26, 49, 0.8);
+    border-radius: 1.5rem;
+    box-shadow: inset 0 4px 15px rgba(0,0,0,0.6);
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+}
+.inventory-belt::-webkit-scrollbar { height: 8px; }
+.inventory-belt::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+.inventory-belt::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 4px; }
+
+.trash-item-inventory {
+    width: 90px;
+    height: 90px;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+    cursor: grab;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    text-align: center;
+    flex-shrink: 0;
+    position: relative;
+}
+.trash-item-inventory.dragging, .trash-item-inventory.touch-dragging {
+    opacity: 0.5;
+}
+.trash-item-inventory:active {
+    cursor: grabbing;
+}
+.trash-item-inventory.shake {
+    animation: shake-anim 0.5s ease-in-out;
+}
+@keyframes shake-anim {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+/* Touch drag ghost element */
+.trash-item-ghost {
+    width: 90px;
+    height: 90px;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    text-align: center;
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(1.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trash-item-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+.trash-item-name {
+    font-size: 0.75rem;
+    color: #333;
+    font-family: sans-serif;
+    font-weight: bold;
+    margin-top: 0.25rem;
+}
+
+.sorting-bin {
+    border-radius: 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: all 0.2s ease-out;
+    box-shadow: inset 0 -8px 0 rgba(0,0,0,0.25), 0 4px 8px rgba(0,0,0,0.3);
+    border: 3px solid transparent;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    padding: clamp(0.5rem, 2vw, 1rem);
+    min-height: 100px;
+}
+
+.bin-title {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1rem, 4vw, 1.2rem);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.bin-description {
+    font-size: clamp(0.7rem, 2vw, 0.8rem);
+    color: rgba(255,255,255,0.85);
+    margin-top: 0.5rem;
+    line-height: 1.2;
+}
+
+
+.sorting-bin.drag-over {
+    transform: translateY(-5px) scale(1.03);
+    border-color: #fff;
+}
+.bin-green { background-color: #16a34a; border-color: #166534; }
+.bin-green.drag-over { box-shadow: 0 0 30px #22c55e, inset 0 -8px 0 rgba(0,0,0,0.25); }
+.bin-yellow { background-color: #d97706; border-color: #9a3412; }
+.bin-yellow.drag-over { box-shadow: 0 0 30px #f59e0b, inset 0 -8px 0 rgba(0,0,0,0.25); }
+.bin-blue { background-color: #2563eb; border-color: #1e40af; }
+.bin-blue.drag-over { box-shadow: 0 0 30px #3b82f6, inset 0 -8px 0 rgba(0,0,0,0.25); }
+.bin-red { background-color: #dc2626; border-color: #991b1b; }
+.bin-red.drag-over { box-shadow: 0 0 30px #ef4444, inset 0 -8px 0 rgba(0,0,0,0.25); }
+
+
+.sorting-progress-bar {
+    height: 35px;
+    flex-grow: 1;
+    background-color: rgba(0,0,0,0.4);
+    border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.2);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+}
+.sorting-progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(to bottom, #aee1ff 0%, #6fc6ff calc(var(--water-level-vh) - 20px), #0a516f var(--water-level-vh), #083a50 100%);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+}
+.progress-bar-text {
+    position: absolute; inset: 0;
+    display: flex; justify-content: center; align-items: center;
+    font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+.sorting-score {
+    font-size: 1.5rem; font-weight: bold;
+    background-color: rgba(0,0,0,0.4);
+    padding: 0.25rem 1.5rem; border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+}
+
+/* Correct/Incorrect feedback */
+.feedback-popup {
+    position: absolute; top: 1rem; left: 50%;
+    transform: translateX(-50%); padding: 0.5rem 1.25rem;
+    border-radius: 99px; z-index: 500;
+    color: white; text-align: center;
+    animation: feedback-fade 3s ease-in-out forwards;
+    width: auto; max-width: 90%;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.feedback-popup.correct {
+    background-color: rgba(34, 197, 94, 0.85);
+    border: 2px solid #22c55e; box-shadow: 0 0 15px rgba(34, 197, 94, 0.7);
+}
+.feedback-popup.incorrect {
+    background-color: rgba(239, 68, 68, 0.85);
+    border: 2px solid #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+}
+.feedback-title { font-size: 1.1rem; font-weight: bold; line-height: 1.2; }
+.feedback-message { font-size: 0.8rem; margin-top: 0.25rem; }
+
+@keyframes feedback-fade {
+    0% { opacity: 0; transform: translate(-50%, -20px) scale(0.8); }
+    15% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+    25% { opacity: 1; transform: translateX(-50%) scale(1); }
+    80% { opacity: 1; transform: translateX(-50%) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) scale(0.8) translateY(-20px); }
+}
+
+/* --- Sorting Tutorial --- */
+.sorting-tutorial-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(13, 26, 46, 0.9);
+    z-index: 300;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    animation: fade-in 0.5s ease-out;
+}
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.tutorial-content {
+    text-align: center;
+    max-width: 600px;
+}
+.tutorial-content h2 {
+    font-size: 2.5rem;
+    font-family: 'Lilita One', cursive;
+    margin-bottom: 1rem;
+    color: var(--success-color);
+}
+.tutorial-content > p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    color: var(--text-color-dim);
+}
+.tutorial-bins {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.tutorial-bin-info {
+    background: rgba(0,0,0,0.2);
+    padding: 1rem;
+    border-radius: 1rem;
+    text-align: left;
+}
+.tutorial-bin-info h3 {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.tutorial-bin-info p {
+    font-size: 0.9rem;
+    color: var(--text-color-dim);
+}
+.tutorial-start-btn {
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    background-color: var(--success-color);
+    color: var(--primary-bg);
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.tutorial-start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px var(--success-color);
+}
+
+
+/* --- SMALL PORTRAIT MOBILE --- */
+@media (max-width: 480px) and (orientation: portrait) {
+    .collection-game-container { cursor: default; }
+    #game-hud { padding: 0.5rem; }
+    .hud-element-wrapper { padding: 0.25rem 0.75rem; }
+    .hud-element { font-size: 1rem; gap: 0.5rem; }
+    .capacity-bar-bg { width: 80px; height: 1rem; }
+    .tutorial-tooltip { font-size: 0.9rem; padding: 0.75rem 1rem; width: 90%; }
+    
+    .sorting-game-frame { height: 100%; max-height: none; padding: 0.75rem; gap: 0.5rem; }
+    .sorting-bins-grid { gap: 0.5rem; }
+    .bin-title { font-size: 0.9rem;}
+    .bin-description { font-size: 0.6rem; margin-top: 0.1rem; }
+    .sorting-bin { padding: 0.5rem; border-radius: 1rem; }
+    .inventory-belt { padding: 0.5rem; gap: 0.5rem; }
+    .trash-item-inventory { width: 70px; height: 70px; }
+    .trash-item-icon { font-size: 1.8rem; }
+    .trash-item-name { font-size: 0.6rem; }
+    .tutorial-bins { grid-template-columns: 1fr; }
+}
+
+/* --- NEW LANDSCAPE LAYOUT --- */
+@media (orientation: landscape) and (max-height: 900px) {
+    .sorting-game-frame {
+        grid-template-columns: 1.2fr 1fr; /* Bins on left, info on right */
+        grid-template-rows: auto 1fr auto;
+        grid-template-areas:
+            "bins header"
+            "bins fact"
+            "bins inventory";
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+
+    .sorting-bins-grid {
+        height: 100%;
+        width: 100%;
+        max-width: none;
+        align-content: center; /* Vertically center bins in their column */
+        gap: 1.5rem;
+    }
+
+    /* Align items in the right column */
+    .sorting-header { align-self: start; }
+    .eco-fact-box { align-self: center; }
+    .inventory-belt { align-self: end; }
+}
+
+/* Centered in both orientations */
+
+/* --- NEW: Results Screen Styles --- */
+.popup-dialog h3 {
+    font-size: 1.5rem;
+    color: var(--highlight-glow);
+    margin-top: 1rem;
+    margin-bottom: -0.5rem;
+    font-family: 'Lilita One', cursive;
+    text-shadow: 2px 2px 3px rgba(0,0,0,0.5);
+}
+.results-gains {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    background: rgba(0,0,0,0.2);
+    padding: 1rem;
+    border-radius: 12px;
+}
+.gains-item {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.gains-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-color-dim);
+    margin-bottom: 0.25rem;
+}
+.gains-value {
+    font-size: 1.4rem;
+    color: var(--success-color);
+}
+/* --- NEW: 3D Wave Styles (Canvas) --- */
+.waves-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  height: 100vh; /* fallback */
+  z-index: 15; /* Above world, below boat */
+  pointer-events: none;
+}
+/* Our canvases now render sky/sea. Hide old gradient overlay inside #game-world */
+#game-world::before { display: none !important; }
+/* Orientation overlay for portrait - DISABLED to allow portrait gameplay */
+/* @media (orientation: portrait) {
+  .rotate-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); }
+  .rotate-overlay .rotate-box { color: #e5f3ff; font-weight: 800; font-size: 1.4rem; padding: 1rem 1.5rem; border: 1px solid rgba(56,189,248,0.4); border-radius: 14px; background: rgba(2,6,23,0.5); }
+} */
+@media (pointer: coarse) {
+  .cursor-dot, .cursor-ring { display: none; }
+  .collection-game-container { cursor: default; }
+}
+.hook-emoji { text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+
+#game-world::before { display: none !important; }
+
+/* Disable the old flat highlight stripe on the waterline; the canvas now handles this dynamically */
+.game-container::after { display: none; }
+
+/* Removed large mobile button; controls are full-screen touch gestures */

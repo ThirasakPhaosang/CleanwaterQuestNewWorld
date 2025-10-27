@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  // Access control for Cleanwater Quest – all game systems
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // PLAYERS ROOT ---------------------------------------------------------
+    // Profile and stats for each player. Used by: menu, profile-data,
+    // game (sessions), leaderboard, customization, missions, rewards, reef, upgrades, redeem
+    match /players/{uid} {
+      // Read own profile, or read others who opted in for leaderboard visibility
+      allow read: if isOwner(uid) || (resource.data.privacy.showOnLeaderboard == true);
+
+      // Only owner can update their profile document
+      allow write: if isOwner(uid);
+
+      // Game sessions (per run)
+      match /sessions/{sid} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Cosmetic ownership or current selections
+      match /inventory/{itemId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /customization/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Upgrade levels purchased by player
+      match /upgrades/{key} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Mission progress and completion flags
+      match /missions/{missionId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Daily rewards/claims, typically one doc per day (YYYY-MM-DD)
+      match /rewards/{dateId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Record of redeemed codes by this player (client writes only their claim record)
+      match /redeem_claims/{codeId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Reef contributions per player (client writes own history)
+      match /reef_contributions/{cid} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // PUBLIC CATALOGS ------------------------------------------------------
+    // Static read-only configuration used across the app.
+    // These are populated via admin tooling or deploy scripts.
+    match /customization_catalog/{docId} { allow read: if true; allow write: if false; }
+    match /missions_catalog/{docId}      { allow read: if true; allow write: if false; }
+    match /upgrades_catalog/{docId}      { allow read: if true; allow write: if false; }
+    match /rewards_catalog/{docId}       { allow read: if true; allow write: if false; }
+    match /reef_catalog/{docId}          { allow read: if true; allow write: if false; }
+
+    // OPTIONAL AGGREGATES --------------------------------------------------
+    // Public stats (e.g., reef global totals, leaderboard snapshots)
+    match /public/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /leaderboard/{boardId} { allow read: if true; allow write: if isAdmin(); }
+
+    // REDEEM CODES MASTER --------------------------------------------------
+    // Master list of redeem codes should never be readable/writeable by clients.
+    // Use Cloud Functions to validate/redeem and write to players/{uid}/redeem_claims.
+    match /redeem_codes/{codeId} { allow read, write: if false; }
+  }
+}

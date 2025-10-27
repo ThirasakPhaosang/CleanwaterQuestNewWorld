@@ -1,0 +1,770 @@
+import React, { useState, useEffect, useRef, useCallback, useMemo, FC, DragEvent, TouchEvent as ReactTouchEvent } from 'react';
+import { createRoot } from 'react-dom/client';
+import { gsap } from 'gsap';
+// FIX: Switched to Firebase v8 compatibility imports.
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import { getPlayerProfile, savePlayerProfile, PlayerProfile, getXpForLevel } from './profile-data';
+
+// --- Firebase Configuration ---
+const firebaseConfig = {
+  apiKey: "AIzaSyAAXqmfSy_q_Suh4td5PeLz-ZsuICf-KwI",
+  authDomain: "cleanwater-quest.firebaseapp.com",
+  projectId: "cleanwater-quest",
+  storageBucket: "cleanwater-quest.firebasestorage.app",
+  messagingSenderId: "331042617564",
+  appId: "1:331042617564:web:b00eeaf03d228ae4569c19",
+  measurementId: "G-3CZGPRNZH8"
+};
+
+// FIX: Switched to Firebase v8 compatibility initialization.
+const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// --- TYPE DEFINITIONS ---
+type GamePhase = 'loading' | 'collection' | 'sorting' | 'results';
+type TrashType = 'recyclable' | 'organic' | 'general' | 'hazardous';
+type TrashId = 'bottle' | 'can' | 'newspaper' | 'apple' | 'shoe' | 'cup' | 'battery' | 'banana' | 'bag' | 'boot' | 'champagne';
+interface TrashData { name: string; icon: string; type: TrashType; points: number; weight: number; ecoFact: string; }
+interface CollectedTrash { id: TrashId; uid: number; name: string; icon: string; type: TrashType; }
+interface GameObject {
+  id: string | TrashId;
+  uid: number;
+  el: HTMLDivElement;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  rot: number;
+  vRot: number;
+  caught: boolean;
+  type: 'trash' | 'fish' | 'bubble';
+  baseY?: number; 
+  sway?: number; 
+  targetX?: number;
+}
+
+// --- GAME CONSTANTS ---
+const WORLD_WIDTH = 4000;
+const WATER_LEVEL_VH = 35;
+const HOOK_MAX_LENGTH_OFFSET = 50;
+const BASE_HOOK_SPEED = 500;
+const TRASH_DATA: Record<TrashId, TrashData> = {
+  bottle: { name: 'ขวดพลาสติก', icon: '🍾', type: 'recyclable', points: 10, weight: 1.2, ecoFact: 'ขวดพลาสติกรีไซเคิลเป็นเสื้อผ้าได้' },
+  can: { name: 'กระป๋อง', icon: '🥫', type: 'recyclable', points: 15, weight: 1.5, ecoFact: 'รีไซเคิลกระป๋องอลูมิเนียมประหยัดพลังงาน 95%' },
+  newspaper: { name: 'หนังสือพิมพ์', icon: '📰', type: 'recyclable', points: 5, weight: 1.1, ecoFact: 'กระดาษสามารถรีไซเคิลได้ 5-7 ครั้ง' },
+  apple: { name: 'แอปเปิ้ล', icon: '🍎', type: 'organic', points: 5, weight: 1.0, ecoFact: 'ขยะอินทรีย์สามารถทำเป็นปุ๋ยบำรุงดินได้' },
+  shoe: { name: 'รองเท้าเก่า', icon: '👞', type: 'general', points: 2, weight: 2.0, ecoFact: 'ขยะทั่วไปจะถูกนำไปฝังกลบอย่างถูกวิธี' },
+  cup: { name: 'แก้วกาแฟ', icon: '☕', type: 'general', points: 8, weight: 1.3, ecoFact: 'แก้วกาแฟส่วนใหญ่มีพลาสติกเคลือบ ทำให้รีไซเคิลยาก' },
+  battery: { name: 'แบตเตอรี่', icon: '🔋', type: 'hazardous', points: 25, weight: 2.5, ecoFact: 'ขยะอันตรายต้องทิ้งในที่เฉพาะ เพื่อป้องกันสารพิษ' },
+  banana: { name: 'เปลือกกล้วย', icon: '🍌', type: 'organic', points: 4, weight: 1.0, ecoFact: 'เปลือกกล้วยเป็นปุ๋ยชั้นดีสำหรับต้นไม้' },
+  bag: { name: 'ถุงช็อปปิ้ง', icon: '🛍️', type: 'general', points: 7, weight: 1.2, ecoFact: 'เต่าทะเลมักเข้าใจผิดว่าถุงพลาสติกคือแมงกะพรุน' },
+  boot: { name: 'รองเท้าบูท', icon: '👢', type: 'general', points: 3, weight: 2.2, ecoFact: 'รองเท้าที่ทำจากหลายวัสดุจะรีไซเคิลได้ยาก' },
+  champagne: { name: 'ขวดแชมเปญ', icon: '🍾', type: 'recyclable', points: 12, weight: 1.8, ecoFact: 'แก้วเป็นวัสดุที่สามารถรีไซเคิลได้ไม่จำกัด' }
+};
+const DAY_CYCLE_DURATION_S = 240;
+
+const getCapacityForLevel = (level: number) => 5 + 3 * (level - 1);
+const getHookSpeedMultiplier = (level: number) => 1 + (level - 1) * 0.15;
+
+
+// --- React App ---
+const Game: FC = () => {
+    const [phase, setPhase] = useState<GamePhase>('loading');
+    const [profile, setProfile] = useState<PlayerProfile | null>(null);
+    const [collectedForSorting, setCollectedForSorting] = useState<CollectedTrash[]>([]);
+    const [gameStats, setGameStats] = useState({ score: 0, collected: 0, sortedCorrectly: 0, incorrect: 0 });
+    const [gameGains, setGameGains] = useState({ xp: 0, coins: 0, coralFragments: 0 });
+    const [showResults, setShowResults] = useState(false);
+
+    useEffect(() => {
+        // FIX: Switched to Firebase v8 compatibility auth state change handler.
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (user) {
+                const playerProfile = getPlayerProfile(user);
+                setProfile(playerProfile);
+                setTimeout(() => setPhase('collection'), 500);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleCollectionComplete = useCallback((collected: CollectedTrash[]) => {
+        // Only transition if we are in the collection phase. This prevents the "bounce back" bug.
+        setPhase(currentPhase => {
+            if (currentPhase === 'collection') {
+                setCollectedForSorting(collected);
+                return 'sorting';
+            }
+            return currentPhase;
+        });
+    }, []);
+
+    const handleSortingComplete = (finalScore: number, sortedCorrectly: number) => {
+        if (!profile) return;
+        
+        const incorrect = collectedForSorting.length - sortedCorrectly;
+        const finalStats = { score: finalScore, collected: collectedForSorting.length, sortedCorrectly, incorrect };
+        setGameStats(finalStats);
+
+        const xpGained = finalScore + (sortedCorrectly * 10);
+        const coinsGained = Math.floor(finalScore / 10);
+        const coralFragmentsGained = Math.floor(sortedCorrectly / 5);
+
+        setGameGains({ xp: xpGained, coins: coinsGained, coralFragments: coralFragmentsGained });
+
+        const newProfile = { ...profile };
+        newProfile.xp += xpGained;
+        newProfile.coins += coinsGained;
+        newProfile.coralFragments += coralFragmentsGained;
+        newProfile.stats.totalCollected += finalStats.collected;
+        newProfile.stats.totalSortedCorrect += finalStats.sortedCorrectly;
+        if (finalScore > newProfile.stats.bestScore) newProfile.stats.bestScore = finalScore;
+
+        let nextLevelXp = getXpForLevel(newProfile.level + 1);
+        while (newProfile.xp >= nextLevelXp) {
+            newProfile.level++;
+            newProfile.coins += 100 * newProfile.level;
+            newProfile.coral += 5;
+            nextLevelXp = getXpForLevel(newProfile.level + 1);
+        }
+        
+        savePlayerProfile(newProfile);
+        setProfile(newProfile);
+        setPhase('results');
+        setTimeout(() => setShowResults(true), 100);
+    };
+    
+    if (phase === 'loading' || !profile) {
+        return <div className="loading-screen">กำลังโหลด...</div>;
+    }
+
+    const mainClasses = phase === 'sorting' ? 'is-sorting' : '';
+
+    return (
+        <main className={mainClasses}>
+            <CollectionGame 
+                profile={profile} 
+                onCollectionComplete={handleCollectionComplete} 
+                isPaused={phase !== 'collection'} 
+            />
+            {phase === 'sorting' && (
+                <div className="sorting-overlay">
+                    <SortingGame 
+                        collected={collectedForSorting} 
+                        onComplete={handleSortingComplete} 
+                    />
+                </div>
+            )}
+            {phase === 'results' && (
+                <ResultsScreen 
+                    stats={gameStats} 
+                    gains={gameGains} 
+                    isVisible={showResults} 
+                />
+            )}
+        </main>
+    );
+};
+
+// --- Sorting Tutorial Component ---
+const SortingTutorial: FC<{ onStart: () => void }> = ({ onStart }) => {
+    const bins = [
+        { name: 'ขยะอินทรีย์', icon: '🌿', desc: 'เศษอาหาร, ใบไม้, สิ่งที่ย่อยสลายได้' },
+        { name: 'ขยะรีไซเคิล', icon: '♻️', desc: 'ขวด, กระป๋อง, กระดาษ ที่นำกลับมาใช้ใหม่ได้' },
+        { name: 'ขยะทั่วไป', icon: '🗑️', desc: 'ถุงพลาสติก, กล่องโฟม ที่รีไซเคิลไม่ได้' },
+        { name: 'ขยะอันตราย', icon: '☣️', desc: 'แบตเตอรี่, หลอดไฟ, กระป๋องสเปรย์' },
+    ];
+
+    return (
+        <div className="sorting-tutorial-overlay">
+            <div className="tutorial-content">
+                <h2>ถึงเวลาคัดแยก!</h2>
+                <p>ลากขยะแต่ละชิ้นไปใส่ในถังที่ถูกต้องเพื่อทำคะแนนพิเศษและช่วยโลกของเรา!</p>
+                <div className="tutorial-bins">
+                    {bins.map(bin => (
+                        <div key={bin.name} className="tutorial-bin-info">
+                            <h3><span>{bin.icon}</span> {bin.name}</h3>
+                            <p>{bin.desc}</p>
+                        </div>
+                    ))}
+                </div>
+                <button onClick={onStart} className="tutorial-start-btn">เริ่มคัดแยก</button>
+            </div>
+        </div>
+    );
+};
+
+// --- Sorting Phase ---
+const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number, sortedCorrectly: number) => void }> = ({ collected, onComplete }) => {
+    const [items, setItems] = useState<CollectedTrash[]>([]);
+    const [score, setScore] = useState(0);
+    const [sortedCorrectly, setSortedCorrectly] = useState(0);
+    const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect'; message: string; id: number } | null>(null);
+    const isCompletingRef = useRef(false);
+    
+    // Drag state for both mouse and touch
+    const [draggedItem, setDraggedItem] = useState<CollectedTrash | null>(null);
+    const [activeBin, setActiveBin] = useState<TrashType | null>(null);
+    
+    // State specifically for touch drag
+    const ghostRef = useRef<HTMLDivElement | null>(null);
+    const originalItemRef = useRef<HTMLDivElement | null>(null);
+    
+    const [isTutorialVisible, setTutorialVisible] = useState(!sessionStorage.getItem('sortingTutorialSeen'));
+
+    const ecoFact = useMemo(() => {
+        const allFacts = Object.values(TRASH_DATA).map(d => d.ecoFact);
+        return allFacts[Math.floor(Math.random() * allFacts.length)];
+    }, []);
+
+    useEffect(() => {
+        setItems([...collected]);
+    }, [collected]);
+    
+    // This is a simple effect to handle the edge case where no trash was collected.
+    useEffect(() => {
+        if (collected.length === 0) {
+            onComplete(0, 0);
+        }
+    }, [collected.length, onComplete]);
+
+
+    const handleSort = (itemToSort: CollectedTrash, binType: TrashType) => {
+        // Prevent sorting if feedback is active or completion has already started
+        if (feedback || isCompletingRef.current) return;
+        
+        const correctType = itemToSort.type;
+        const itemData = TRASH_DATA[itemToSort.id];
+        let newScore = score;
+        let finalSortedCorrectly = sortedCorrectly;
+        
+        if (binType === correctType) {
+            newScore += (itemData?.points || 5) * 1.5; // 50% bonus
+            finalSortedCorrectly = sortedCorrectly + 1;
+            setSortedCorrectly(finalSortedCorrectly);
+            setFeedback({ type: 'correct', message: 'เยี่ยมมาก!', id: Date.now() });
+        } else {
+            newScore -= (itemData?.points || 5) * 0.25; // 25% penalty
+            const correctBinName = bins.find(b => b.type === correctType)?.name || 'ประเภทที่ถูกต้อง';
+            setFeedback({ type: 'incorrect', message: `ขยะชิ้นนี้เป็น "${correctBinName}"`, id: Date.now() });
+        }
+    
+        setScore(Math.max(0, newScore));
+        setItems(prevItems => prevItems.filter(item => item.uid !== itemToSort.uid));
+        setTimeout(() => setFeedback(null), 1200);
+        
+        // Unify completion check. `items.length` is checked before the state update, so `1` is the last item.
+        if (items.length === 1) {
+            isCompletingRef.current = true;
+            setTimeout(() => {
+                // Use the locally tracked values to avoid state lag
+                onComplete(Math.round(newScore), finalSortedCorrectly);
+            }, 1300); // Wait for the final feedback animation to be visible.
+        }
+    };
+    
+    // --- Mouse Drag Handlers ---
+    const handleDragStart = (e: DragEvent<HTMLDivElement>, item: CollectedTrash) => {
+        setDraggedItem(item);
+        e.dataTransfer.effectAllowed = 'move';
+        (e.currentTarget as HTMLDivElement).classList.add('dragging');
+    };
+    const handleDragEnd = (e: DragEvent<HTMLDivElement>) => {
+        setDraggedItem(null);
+        setActiveBin(null);
+        (e.currentTarget as HTMLDivElement).classList.remove('dragging');
+    };
+    const handleDrop = (e: DragEvent<HTMLDivElement>, binType: TrashType) => {
+        e.preventDefault();
+        if (draggedItem) {
+            handleSort(draggedItem, binType);
+        }
+        setActiveBin(null);
+    };
+    const handleDragOver = (e: DragEvent<HTMLDivElement>, binType: TrashType) => {
+        e.preventDefault();
+        setActiveBin(binType);
+    };
+    const handleDragLeave = () => setActiveBin(null);
+
+    // --- Touch Drag Handlers ---
+    const handleTouchStart = (e: ReactTouchEvent<HTMLDivElement>, item: CollectedTrash) => {
+        if (feedback) return;
+        const touch = e.touches[0];
+        originalItemRef.current = e.currentTarget;
+        setDraggedItem(item);
+
+        const ghost = originalItemRef.current.cloneNode(true) as HTMLDivElement;
+        ghost.classList.add('trash-item-ghost');
+        document.body.appendChild(ghost);
+        ghostRef.current = ghost;
+
+        ghost.style.left = `${touch.clientX}px`;
+        ghost.style.top = `${touch.clientY}px`;
+        
+        originalItemRef.current.classList.add('touch-dragging');
+    };
+
+    const handleTouchMove = (e: ReactTouchEvent<HTMLDivElement>) => {
+        if (!draggedItem || !ghostRef.current) return;
+        const touch = e.touches[0];
+        ghostRef.current.style.left = `${touch.clientX}px`;
+        ghostRef.current.style.top = `${touch.clientY}px`;
+        
+        const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+        const binElement = elementUnder?.closest('.sorting-bin') as HTMLDivElement | null;
+        
+        setActiveBin(binElement?.dataset.binType as TrashType | null);
+    };
+    
+    const handleTouchEnd = () => {
+        if (activeBin && draggedItem) {
+            handleSort(draggedItem, activeBin);
+        }
+
+        if (ghostRef.current) {
+            document.body.removeChild(ghostRef.current);
+            ghostRef.current = null;
+        }
+        if(originalItemRef.current) {
+            originalItemRef.current.classList.remove('touch-dragging');
+            originalItemRef.current = null;
+        }
+        setDraggedItem(null);
+        setActiveBin(null);
+    };
+
+    const startSorting = () => {
+        sessionStorage.setItem('sortingTutorialSeen', 'true');
+        setTutorialVisible(false);
+    };
+
+    if (isTutorialVisible) {
+        return <SortingTutorial onStart={startSorting} />;
+    }
+    
+    if (collected.length === 0) {
+        return null; 
+    }
+
+    const bins: { type: TrashType; name: string; icon: string; desc: string; colorClass: string }[] = [
+        { type: 'organic', name: 'อินทรีย์', icon: '🌿', desc: 'เศษอาหาร, ใบไม้', colorClass: 'bin-green' },
+        { type: 'recyclable', name: 'รีไซเคิล', icon: '♻️', desc: 'ขวด, กระป๋อง, กระดาษ', colorClass: 'bin-yellow' },
+        { type: 'general', name: 'ทั่วไป', icon: '🗑️', desc: 'ถุงพลาสติก, โฟม', colorClass: 'bin-blue' },
+        { type: 'hazardous', name: 'อันตราย', icon: '☣️', desc: 'แบตเตอรี่, สารเคมี', colorClass: 'bin-red' },
+    ];
+    const totalItems = collected.length;
+    const sortedCount = totalItems - items.length;
+
+    const renderBin = (bin: typeof bins[0]) => (
+        <div 
+            key={bin.type} 
+            data-bin-type={bin.type}
+            className={`sorting-bin ${bin.colorClass} ${activeBin === bin.type ? 'drag-over' : ''}`}
+            onDrop={(e) => handleDrop(e, bin.type)}
+            onDragOver={(e) => handleDragOver(e, bin.type)}
+            onDragLeave={handleDragLeave}
+        >
+            <div className="bin-title">
+                <span style={{ fontSize: '1.5em', lineHeight: 1 }}>{bin.icon}</span>
+                <span>{bin.name}</span>
+            </div>
+            <p className="bin-description">{bin.desc}</p>
+        </div>
+    );
+
+    const renderInventoryItem = (item: CollectedTrash) => (
+         <div 
+            key={item.uid}
+            className="trash-item-inventory"
+            draggable={!feedback}
+            onDragStart={e => handleDragStart(e, item)}
+            onDragEnd={handleDragEnd}
+            onTouchStart={e => handleTouchStart(e, item)}
+            onTouchEnd={handleTouchEnd}
+        >
+            <div className="trash-item-icon">{item.icon}</div>
+            <div className="trash-item-name">{item.name}</div>
+        </div>
+    );
+    
+    return (
+        <div className="sorting-game-frame">
+            {feedback && (
+                <div key={feedback.id} className={`feedback-popup ${feedback.type}`}>
+                    <p className="feedback-title">{feedback.type === 'correct' ? 'ถูกต้อง!' : 'ผิดประเภท!'}</p>
+                    <p className="feedback-message">{feedback.message}</p>
+                </div>
+            )}
+            <div className="sorting-header">
+                <div className="sorting-progress-bar">
+                    <div className="sorting-progress-bar-fill" style={{ width: `${(sortedCount / totalItems) * 100}%`}}></div>
+                    <span className="progress-bar-text">{sortedCount} / {totalItems}</span>
+                </div>
+                <div className="sorting-score">คะแนน: {Math.round(score)}</div>
+            </div>
+            
+            <div className="eco-fact-box">
+                <strong>รู้หรือไม่?</strong> {ecoFact}
+            </div>
+            
+            <div className="sorting-bins-grid">
+                {bins.map(bin => renderBin(bin))}
+            </div>
+
+
+            <div className="inventory-belt" onTouchMove={handleTouchMove}>
+                {items.map(item => renderInventoryItem(item))}
+            </div>
+        </div>
+    );
+};
+
+// --- Collection Phase ---
+const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: CollectedTrash[]) => void, isPaused: boolean }> = ({ profile, onCollectionComplete, isPaused }) => {
+    const gameContainerRef = useRef<HTMLDivElement>(null);
+    const gameWorldRef = useRef<HTMLDivElement>(null);
+    const lineRef = useRef<SVGLineElement>(null);
+    const hookRef = useRef<HTMLDivElement>(null);
+    const boatRef = useRef<SVGSVGElement>(null);
+    const cursorDotRef = useRef<HTMLDivElement>(null);
+    const cursorRingRef = useRef<HTMLDivElement>(null);
+    
+    // FIX: Declare refs for game state management to resolve 'cannot find name' errors.
+    const gameObjectsRef = useRef<GameObject[]>([]);
+    const boatPos = useRef({ x: window.innerWidth / 2, y: 0, rot: 0, targetX: window.innerWidth / 2 });
+
+    interface HookState {
+        status: 'idle' | 'lowering' | 'raising';
+        y: number;
+        targetX: number;
+        targetY: number;
+        caught: GameObject | null;
+        weight: number;
+    }
+    const hookState = useRef<HookState>({
+        status: 'idle',
+        y: 0,
+        targetX: 0,
+        targetY: 0,
+        caught: null,
+        weight: 1.0,
+    });
+
+    const [showTutorial, setShowTutorial] = useState(true);
+    const [collected, setCollected] = useState<CollectedTrash[]>([]);
+    const collectedRef = useRef(collected);
+    useEffect(() => { collectedRef.current = collected; }, [collected]);
+    const maxCapacity = useMemo(() => getCapacityForLevel(profile.upgrades.capacity.level), [profile.upgrades.capacity.level]);
+    
+    useEffect(() => {
+        if (collected.length >= maxCapacity) {
+            const timer = setTimeout(() => {
+                onCollectionComplete(collected);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [collected, maxCapacity, onCollectionComplete]);
+    
+    const getWaveHeightAndSlope = useCallback((x: number, time: number) => {
+        const waveParams = [
+          { amp: 20, freq: 0.005, speed: 0.2, phase: 0.5 },
+          { amp: 10, freq: 0.01, speed: 0.4, phase: 1.5 },
+          { amp: 5, freq: 0.02, speed: -0.3, phase: 2.0 },
+        ];
+        
+        const waterLine = window.innerHeight * (WATER_LEVEL_VH / 100);
+        let height = waterLine;
+        let slope = 0;
+        const timeSeconds = time / 1000;
+      
+        for (const wave of waveParams) {
+          const angle = x * wave.freq + timeSeconds * wave.speed + wave.phase;
+          height += wave.amp * Math.sin(angle);
+          slope += wave.amp * wave.freq * Math.cos(angle);
+        }
+      
+        return { height, slope };
+    }, []);
+
+    const spawnObject = useCallback((type: GameObject['type']) => {
+        const el = document.createElement('div');
+        const waterLine = window.innerHeight * (WATER_LEVEL_VH / 100);
+        let obj: Partial<GameObject> = { el, uid: Math.random(), caught: false, type };
+
+        if (type === 'trash') {
+            const id = Object.keys(TRASH_DATA)[Math.floor(Math.random() * Object.keys(TRASH_DATA).length)] as TrashId;
+            el.className = 'world-object collectible-trash';
+            el.textContent = TRASH_DATA[id].icon;
+            obj = { ...obj, id, x: Math.random() * (WORLD_WIDTH - 200) + 100, y: Math.random() * (window.innerHeight - waterLine - 50) + waterLine + 20, vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 10, rot: Math.random() * 360, vRot: (Math.random() - 0.5) * 20 };
+        }
+        
+        const parent = gameWorldRef.current;
+        if(parent) parent.appendChild(el);
+        return obj as GameObject;
+    }, []);
+
+    useEffect(() => {
+        if (isPaused) return;
+        const objects: GameObject[] = [];
+        for (let i = 0; i < 40; i++) objects.push(spawnObject('trash'));
+        gameObjectsRef.current = objects;
+        
+        const tutorialTimer = setTimeout(() => setShowTutorial(false), 6000);
+        
+        const handleInteractionStart = (e: MouseEvent | TouchEvent) => {
+            if (hookState.current.status !== 'idle' || isPaused || collectedRef.current.length >= maxCapacity) return;
+            e.preventDefault();
+            setShowTutorial(false);
+            const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+            const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+            const worldScrollX = gsap.getProperty(gameWorldRef.current, "x") as number;
+            const worldX = clientX - worldScrollX;
+            hookState.current.status = 'lowering';
+            hookState.current.targetY = clientY;
+            hookState.current.targetX = worldX;
+            gameContainerRef.current?.classList.add('is-hook-active');
+        };
+        const handleInteractionEnd = () => { 
+            if (hookState.current.status === 'lowering') hookState.current.status = 'raising'; 
+            gameContainerRef.current?.classList.remove('is-hook-active');
+        };
+        const handleMove = (e: MouseEvent | TouchEvent) => {
+            if (isPaused) return;
+            const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+            const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+            boatPos.current.targetX = clientX;
+            gsap.to([cursorDotRef.current, cursorRingRef.current], {
+                duration: 0.3,
+                x: clientX,
+                y: clientY,
+                ease: "power2.out"
+            });
+        };
+        
+        const gameLoop = (time: number, deltaTime: number) => {
+            if (!gameContainerRef.current || isPaused) return;
+            
+            const deltaSeconds = Math.min(deltaTime / 1000, 0.032);
+        
+            const boatEl = boatRef.current;
+            const hookEl = hookRef.current;
+            if (!boatEl || !hookEl || !lineRef.current || !gameWorldRef.current) return;
+        
+            const targetX = Math.max(100, Math.min(window.innerWidth - 100, boatPos.current.targetX));
+            boatPos.current.x += (targetX - boatPos.current.x) * 0.1;
+            const boatScreenX = boatPos.current.x;
+            
+            const { height, slope } = getWaveHeightAndSlope(boatScreenX, time);
+            boatPos.current.y = height;
+            boatPos.current.rot = slope * (180 / Math.PI) * 0.2; // Realistic rotation based on wave slope
+            gsap.set(boatEl, { x: boatScreenX - 100, y: boatPos.current.y - 100, rotation: boatPos.current.rot });
+
+            const scrollRatio = boatScreenX / window.innerWidth;
+            const worldScrollX = -scrollRatio * (WORLD_WIDTH - window.innerWidth);
+            gsap.set(gameWorldRef.current, { x: worldScrollX });
+            
+            const lineAnchorY = boatPos.current.y - 20;
+            const hookSpeed = (BASE_HOOK_SPEED * getHookSpeedMultiplier(profile.upgrades.hook.level) * deltaSeconds) / hookState.current.weight;
+            const boatWorldX = boatScreenX - worldScrollX;
+
+            if (hookState.current.status === 'lowering') {
+                hookState.current.y += hookSpeed;
+                if (hookState.current.y >= hookState.current.targetY || hookState.current.y >= window.innerHeight - HOOK_MAX_LENGTH_OFFSET) {
+                    hookState.current.status = 'raising';
+                }
+            } else if (hookState.current.status === 'raising') {
+                hookState.current.y -= hookSpeed;
+                if (hookState.current.y <= 0) {
+                    hookState.current.y = 0;
+                    hookState.current.status = 'idle';
+                    
+                    const caughtItem = hookState.current.caught;
+                    if (caughtItem) {
+                        const currentCollected = collectedRef.current;
+                        if (currentCollected.length < maxCapacity) {
+                            const trashData = TRASH_DATA[caughtItem.id as TrashId];
+                            if(trashData){
+                                setCollected(prev => [...prev, {
+                                    id: caughtItem.id as TrashId,
+                                    uid: caughtItem.uid,
+                                    name: trashData.name,
+                                    icon: trashData.icon,
+                                    type: trashData.type,
+                                }]);
+                                gameObjectsRef.current = gameObjectsRef.current.filter(o => o.uid !== caughtItem.uid);
+                                caughtItem.el.remove();
+                            }
+                        } else {
+                            caughtItem.caught = false;
+                        }
+                    }
+                    hookState.current.caught = null;
+                    hookState.current.weight = 1.0;
+                }
+            }
+            
+            const hookInterpolation = hookState.current.y > 0 && hookState.current.targetY > 0 ? (hookState.current.y / hookState.current.targetY) : 0;
+            const hookWorldX = boatWorldX + (hookState.current.targetX - boatWorldX) * hookInterpolation;
+            const hookWorldY = lineAnchorY + hookState.current.y;
+            gsap.set(hookEl, { x: hookWorldX, y: hookWorldY });
+        
+            const hookScreenX = hookWorldX + worldScrollX;
+            gsap.set(lineRef.current, { attr: { x1: boatScreenX, y1: lineAnchorY, x2: hookScreenX, y2: hookWorldY } });
+            
+            gameObjectsRef.current.forEach(obj => {
+                if (obj.caught) {
+                    gsap.set(obj.el, { x: hookWorldX, y: hookWorldY });
+                    return;
+                }
+                
+                if (obj.type === 'trash') {
+                    obj.vy += 1 * deltaSeconds; // Sink slowly
+                    obj.vy = Math.min(obj.vy, 5);
+                    obj.x += Math.sin(time / 500 + obj.uid * 10) * 10 * deltaSeconds; // Sway
+                    if (obj.y > window.innerHeight - 30) {
+                        obj.y = window.innerHeight - 30;
+                        obj.vy *= -0.1; // Gentle bounce
+                        obj.vx *= 0.9;
+                    }
+                }
+
+                obj.x += obj.vx * deltaSeconds;
+                obj.y += obj.vy * deltaSeconds;
+                obj.rot += obj.vRot * deltaSeconds;
+                gsap.set(obj.el, { x: obj.x, y: obj.y, rotation: obj.rot });
+            });
+        
+            if (hookState.current.status === 'lowering' && !hookState.current.caught) {
+                for (const trash of gameObjectsRef.current) {
+                    if (trash.type === 'trash' && !trash.caught) {
+                        const dx = hookWorldX - trash.x;
+                        const dy = hookWorldY - trash.y;
+                        if (dx * dx + dy * dy < 40 * 40) {
+                            hookState.current.caught = trash;
+                            trash.caught = true;
+                            hookState.current.status = 'raising';
+                            hookState.current.weight = TRASH_DATA[trash.id as TrashId].weight;
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+
+        const ticker = gsap.ticker;
+        ticker.add(gameLoop);
+        
+        const container = gameContainerRef.current!;
+        container.addEventListener('mousedown', handleInteractionStart);
+        container.addEventListener('mouseup', handleInteractionEnd);
+        container.addEventListener('touchstart', handleInteractionStart, { passive: false });
+        container.addEventListener('touchend', handleInteractionEnd);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        
+        return () => {
+            ticker.remove(gameLoop);
+            clearTimeout(tutorialTimer);
+            container.removeEventListener('mousedown', handleInteractionStart);
+            container.removeEventListener('mouseup', handleInteractionEnd);
+            container.removeEventListener('touchstart', handleInteractionStart);
+            container.removeEventListener('touchend', handleInteractionEnd);
+            window.removeEventListener('mousemove', handleMove);
+            window.removeEventListener('touchmove', handleMove);
+            if (gameWorldRef.current) gameWorldRef.current.innerHTML = '';
+        };
+    }, [isPaused, profile, maxCapacity, getWaveHeightAndSlope, spawnObject, onCollectionComplete]);
+    
+    return (
+        <div ref={gameContainerRef} className="collection-game-container">
+            <div ref={cursorDotRef} className="cursor-dot"></div>
+            <div ref={cursorRingRef} className="cursor-ring"></div>
+            <div ref={gameWorldRef} className="game-world" style={{ width: `${WORLD_WIDTH}px` }}>
+                <div ref={hookRef} className="hook">⚓</div>
+            </div>
+            <svg className="line-svg"><line ref={lineRef} stroke="#333" strokeWidth="2" /></svg>
+            <BoatSVG ref={boatRef} customization={profile.customization} />
+            <HUD collected={collected.length} maxCapacity={maxCapacity} score={0} />
+            {showTutorial && <div className="tutorial-tooltip">เลื่อนเมาส์เพื่อบังคับทิศทาง<br/>คลิกค้างไว้เพื่อปล่อยตะขอ</div>}
+        </div>
+    );
+};
+
+const BoatSVG = React.forwardRef<SVGSVGElement, { customization: PlayerProfile['customization'] }>(({ customization }, ref) => (
+    <svg ref={ref} className="boat-svg" viewBox="0 0 200 150">
+        <g id="ship-body">
+            <path id="ship-hull" d="M 20 100 C 20 120, 180 120, 180 100 L 150 70 L 50 70 Z" fill={customization.boatColor} />
+            <path id="ship-cabin" d="M 60 70 L 140 70 L 130 40 L 70 40 Z" fill="#a0b0c0" />
+        </g>
+        <g id="ship-flag">
+            <line x1="140" y1="70" x2="140" y2="20" stroke="#506070" strokeWidth="3" />
+            <path id="flag-canvas" d="M 140 20 C 155 15, 170 25, 185 20 L 185 40 C 170 45, 155 35, 140 40 Z" fill={customization.flagId.includes('wave') ? '#38bdf8' : '#f0f8ff'}/>
+        </g>
+    </svg>
+));
+
+const HUD: FC<{ collected: number, maxCapacity: number, score: number }> = ({ collected, maxCapacity, score }) => (
+    <div id="game-hud">
+        <div className="hud-element-wrapper"><div className="hud-element capacity-bar"><span>ความจุ: {collected}/{maxCapacity}</span><div className="capacity-bar-bg"><div className="capacity-bar-fill" style={{ width: `${(collected / maxCapacity) * 100}%` }}></div></div></div></div>
+        <div className="hud-element-wrapper"><div className="hud-element game-score"><span>คะแนน: {score}</span></div></div>
+    </div>
+);
+
+interface ResultsScreenProps {
+  stats: { score: number; collected: number; sortedCorrectly: number; incorrect: number };
+  gains: { xp: number; coins: number; coralFragments: number };
+  isVisible: boolean;
+}
+const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
+    <div className={`game-overlay ${isVisible ? 'visible' : ''}`}>
+        <div className="popup-dialog">
+            <h2>ภารกิจสำเร็จ!</h2>
+            <div className="results-summary">
+                <div className="summary-item">
+                    <span className="label">คะแนนรวม</span>
+                    <span className="value">🏆 {Math.round(stats.score)}</span>
+                </div>
+                <div className="summary-item">
+                    <span className="label">เก็บขยะ</span>
+                    <span className="value">🌊 {stats.collected}</span>
+                </div>
+                <div className="summary-item">
+                    <span className="label">คัดแยกถูกต้อง</span>
+                    <span className="value">♻️ {stats.sortedCorrectly}</span>
+                </div>
+                <div className="summary-item">
+                    <span className="label">คัดแยกผิด</span>
+                    <span className="value">❌ {stats.incorrect}</span>
+                </div>
+            </div>
+            
+            <h3>รางวัลที่ได้รับ</h3>
+            <div className="results-gains">
+                 <div className="gains-item">
+                    <span className="gains-label">XP</span>
+                    <span className="gains-value">🧭 +{gains.xp}</span>
+                </div>
+                <div className="gains-item">
+                    <span className="gains-label">เหรียญ</span>
+                    <span className="gains-value">💰 +{gains.coins}</span>
+                </div>
+                <div className="gains-item">
+                    <span className="gains-label">ชิ้นส่วนปะการัง</span>
+                    <span className="gains-value">🐚 +{gains.coralFragments}</span>
+                </div>
+            </div>
+
+            <div className="popup-buttons">
+                <button className="btn-secondary" onClick={() => window.location.reload()}>เล่นอีกครั้ง</button>
+                <button className="btn-primary" onClick={() => window.location.href = 'menu.html'}>กลับไปที่ท่าเรือ</button>
+            </div>
+        </div>
+    </div>
+);
+
+const root = createRoot(document.getElementById('root')!);
+root.render(<Game />);

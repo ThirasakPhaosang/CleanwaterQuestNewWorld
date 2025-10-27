@@ -1,0 +1,267 @@
+:root {
+  --upgrades-modal-width: clamp(340px, 90vw, 600px);
+  --upgrades-modal-height: clamp(500px, 85vh, 600px);
+  --upgrades-card-bg: rgba(10, 32, 60, 0.7);
+  --upgrades-card-border: rgba(0, 246, 255, 0.2);
+  --upgrades-level-dot-inactive: rgba(0, 0, 0, 0.4);
+  --upgrades-level-dot-active: #2dd4bf;
+  --upgrades-button-ready-bg: #2dd4bf;
+  --upgrades-button-disabled-bg: #0e3a5a;
+}
+
+#upgrades-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#upgrades-overlay:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+}
+
+#upgrades-modal {
+  position: relative;
+  width: var(--upgrades-modal-width);
+  height: var(--upgrades-modal-height);
+  background: linear-gradient(165deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
+  border: 1px solid var(--glow-color-dark);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#upgrades-overlay:not(.hidden) #upgrades-modal {
+  transform: scale(1);
+}
+
+#upgrades-modal .close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 2.5rem;
+  color: var(--text-color-dim);
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+  z-index: 10;
+  line-height: 1;
+}
+
+#upgrades-modal .close-button:hover {
+  color: var(--text-color);
+  transform: rotate(90deg);
+}
+
+#upgrades-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+#upgrades-header h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  margin-bottom: 0.5rem;
+}
+
+.header-subtitle {
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  color: var(--text-color-dim);
+}
+
+#upgrades-player-currency {
+  margin-top: 1rem;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 50px;
+  padding: 0.4rem 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--highlight-glow);
+  display: inline-block;
+  border: 1px solid var(--upgrades-card-border);
+}
+
+#upgrades-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto; /* This makes the content area scrollable */
+  padding-right: 0.5rem; /* Space for the scrollbar */
+}
+
+/* Custom scrollbar for a polished look */
+#upgrades-content::-webkit-scrollbar {
+  width: 4px;
+}
+#upgrades-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+#upgrades-content::-webkit-scrollbar-thumb {
+  background-color: var(--glow-color-soft);
+  border-radius: 4px;
+}
+
+.upgrade-card {
+  background-color: var(--upgrades-card-bg);
+  border: 1px solid var(--upgrades-card-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: box-shadow 0.3s ease;
+  flex-shrink: 0; /* Prevent cards from shrinking */
+}
+
+.upgrade-card.is-animating {
+    animation: success-pulse 0.6s ease-in-out;
+}
+
+@keyframes success-pulse {
+    0% { transform: scale(1); box-shadow: none; }
+    50% { transform: scale(1.02); box-shadow: 0 0 20px var(--upgrades-button-ready-bg); }
+    100% { transform: scale(1); box-shadow: none; }
+}
+
+.upgrade-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.upgrade-icon {
+  font-size: 2rem;
+}
+.upgrade-title-group {
+  flex-grow: 1;
+}
+.upgrade-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.upgrade-description {
+  font-size: 0.85rem;
+  color: var(--text-color-dim);
+}
+
+.upgrade-level-bar {
+  display: flex;
+  gap: 4px;
+}
+.level-dot {
+  flex-grow: 1;
+  height: 8px;
+  background-color: var(--upgrades-level-dot-inactive);
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+.level-dot.active {
+  background-color: var(--upgrades-level-dot-active);
+}
+
+.upgrade-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.upgrade-value-change {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.arrow {
+  color: var(--highlight-glow);
+}
+.next-value {
+  color: var(--upgrades-button-ready-bg);
+}
+
+.upgrade-button {
+  background-color: var(--upgrades-button-disabled-bg);
+  color: var(--text-color-dim);
+  border: 1px solid var(--glow-color-dark);
+  border-radius: 12px;
+  padding: 0.75rem;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.upgrade-button:disabled {
+  cursor: not-allowed;
+}
+.upgrade-button:not(:disabled) {
+  background-color: var(--upgrades-button-ready-bg);
+  color: var(--primary-bg);
+  box-shadow: 0 0 15px var(--upgrades-button-ready-bg);
+}
+
+#upgrades-footer {
+  flex-shrink: 0;
+  padding-top: 1.5rem;
+  text-align: center;
+}
+
+#upgrade-eco-tip {
+  font-size: 0.9rem;
+  color: var(--text-color-dim);
+}
+
+/* Responsive & Landscape */
+@media (max-width: 480px) {
+  #upgrades-modal {
+    padding: 1rem;
+  }
+  .upgrade-card {
+    padding: 1rem;
+  }
+  .upgrade-title {
+    font-size: 1.1rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  #upgrades-modal {
+    padding: 1rem;
+    height: 95vh;
+  }
+  #upgrades-header {
+    margin-bottom: 1rem;
+  }
+  #upgrades-content {
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start; /* Align to top to prevent stretching */
+  }
+  .upgrade-card {
+    flex: 1;
+    max-width: 50%;
+  }
+  #upgrades-footer {
+    padding-top: 1rem;
+  }
+}

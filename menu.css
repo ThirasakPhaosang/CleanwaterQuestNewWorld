@@ -1,0 +1,766 @@
+:root {
+  --primary-bg: #010410;
+  --secondary-bg: #0a142c;
+  --highlight-color: #00f6ff;
+  --highlight-glow: #7fffd4; /* Aquamarine for a brighter pop */
+  --text-color: #f0f8ff;
+  --text-color-dim: rgba(240, 248, 255, 0.7);
+  --glow-color: rgba(0, 246, 255, 0.8);
+  --glow-color-soft: rgba(0, 246, 255, 0.4);
+  --glow-color-dark: rgba(0, 246, 255, 0.2);
+  --glass-bg: rgba(10, 20, 44, 0.65);
+  /* New Thematic "Bioluminescent" color scheme for the transition */
+  --transition-color-deep: #081a3d;   /* Deep Teal/Blue */
+  --transition-color-light: #00c4cc; /* Vibrant Cyan */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Kanit', sans-serif; /* Changed to modern Thai font */
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+}
+
+#app-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  perspective: 1200px;
+}
+
+
+/* --- New "Water Receding" Page Reveal Transition --- */
+#page-transition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none; /* Allows interaction with menu once gone */
+  visibility: visible; /* Starts visible */
+  opacity: 1;
+  transition: visibility 0s 1.8s, opacity 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* State after animation is triggered */
+#page-transition.is-revealing {
+  visibility: hidden;
+  opacity: 0;
+}
+#page-transition .wave-svg-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* MODIFIED: Increased height and changed to vh for robustness */
+    height: 110vh;
+    transform: translateY(0); /* Starts in view */
+    transition: transform 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#page-transition.is-revealing .wave-svg-container {
+    /* MODIFIED: Slides down and out of view using vh */
+    transform: translateY(110vh);
+}
+.wave-svg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150vh; /* MODIFIED: Increased for consistency */
+}
+/* MODIFIED: Removed fill/opacity, added blend modes for realism */
+.wave-2, .wave-3 {
+    mix-blend-mode: screen; /* Additive light blending for a glowing effect */
+}
+@keyframes wave-flow {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-25px); }
+  100% { transform: translateX(0); }
+}
+.wave-1 {
+    animation: wave-flow 12s ease-in-out infinite;
+    bottom: -10px;
+}
+.wave-2 {
+    animation: wave-flow 15s ease-in-out infinite reverse;
+    bottom: -5px;
+}
+.wave-3 {
+    animation: wave-flow 10s ease-in-out infinite;
+}
+
+
+/* --- New Multi-Layered 3D Background --- */
+#depth-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+.depth-layer {
+    position: absolute;
+    top: -5%;
+    left: -5%;
+    width: 110%;
+    height: 110%;
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.layer-far-bg {
+    background: var(--primary-bg);
+    z-index: 1;
+}
+.layer-mid-bg {
+    background: radial-gradient(circle at 50% 30%, var(--secondary-bg), transparent 70%);
+    z-index: 2;
+}
+.layer-foreground-effects {
+    z-index: 3;
+    overflow: hidden;
+}
+.layer-foreground-effects::before,
+.layer-foreground-effects::after {
+    content: '';
+    position: absolute;
+    width: 300%;
+    height: 200%;
+    top: -50%;
+    left: -100%;
+    background: linear-gradient(
+        -30deg,
+        transparent 45%,
+        rgba(0, 246, 255, 0.03) 50%,
+        rgba(0, 246, 255, 0.05) 52%,
+        transparent 57%
+    );
+    animation: god-rays 25s linear infinite;
+}
+.layer-foreground-effects::after {
+    animation-delay: -12s;
+    background: linear-gradient(
+        -35deg,
+        transparent 48%,
+        rgba(0, 246, 255, 0.02) 51%,
+        transparent 54%
+    );
+}
+
+@keyframes god-rays {
+    from { transform: translateY(-10%) translateX(0%); }
+    to { transform: translateY(10%) translateX(20%); }
+}
+
+
+#interactive-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  z-index: 5;
+}
+#interactive-canvas:active {
+    cursor: grabbing;
+}
+
+/* --- Main UI --- */
+#menu-ui {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+#menu-ui > * {
+    pointer-events: auto;
+}
+
+
+/* --- Profile Widget --- */
+#user-profile {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: var(--glass-bg);
+    padding: 8px 12px;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px var(--glow-color-dark), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glow-color-dark);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+#user-profile:hover {
+    box-shadow: 0 0 25px var(--glow-color-soft), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.user-avatar-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+#user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--highlight-color);
+    background-color: var(--primary-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px; /* For emoji */
+}
+
+#user-level-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -5px;
+    background-color: var(--profile-level-bg, #f59e0b);
+    color: var(--primary-bg);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+    border: 2px solid var(--secondary-bg);
+}
+
+.user-info-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#user-name {
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.user-title-display {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--highlight-glow);
+    opacity: 0.9;
+    line-height: 1.1;
+}
+
+/* --- Main Content Layout --- */
+.main-content {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.main-content > * {
+    pointer-events: auto;
+}
+
+.center-cluster {
+    position: relative;
+}
+
+@keyframes subtle-glow-pulse {
+    0%, 100% { box-shadow: 0 0 20px var(--glow-color-dark), inset 0 0 15px rgba(0, 0, 0, 0.6); }
+    50% { box-shadow: 0 0 30px var(--glow-color-soft), inset 0 0 15px rgba(0, 0, 0, 0.6); }
+}
+
+/* --- Center Button --- */
+.center-button {
+  width: 140px;
+  height: 140px;
+  background-color: var(--glass-bg);
+  border: 2px solid var(--glow-color-soft);
+  color: var(--text-color);
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 50%;
+  position: relative;
+  z-index: 12;
+  overflow: hidden;
+  animation: subtle-glow-pulse 4s ease-in-out infinite;
+}
+.center-button .button-icon { font-size: 3rem; }
+.center-button .button-text { font-weight: 700; font-size: 1.2rem; }
+
+.center-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px var(--highlight-glow), inset 0 0 25px var(--glow-color-dark);
+    border-color: var(--highlight-glow);
+}
+
+/* --- Coral Constellation (Orbital Menu) --- */
+#orbital-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1px;
+    height: 1px;
+    z-index: 11;
+}
+.orbital-button-wrapper {
+    position: absolute;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+.orbital-button {
+    width: 110px;
+    height: 110px;
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glow-color-dark);
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 0 15px var(--glow-color-dark), inset 0 0 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    color: var(--text-color-dim);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    animation: subtle-glow-pulse 5s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * 0.2s);
+}
+.orbital-button .button-icon { font-size: 2rem; }
+.orbital-button .button-text { font-size: 0.8rem; font-weight: 600; }
+
+.orbital-button-wrapper:hover .orbital-button {
+    transform: scale(1.1);
+    border-color: var(--highlight-color);
+    box-shadow: 0 0 30px var(--highlight-glow), inset 0 0 15px rgba(0, 0, 0, 0.5);
+    color: var(--text-color);
+}
+
+/* Bioluminescent Tendril Effect */
+.tendril {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 0;
+    background: linear-gradient(to top, var(--highlight-color), transparent);
+    transform-origin: top;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 0 0 8px var(--highlight-color);
+    border-radius: 2px;
+}
+.orbital-button-wrapper:hover .tendril {
+    opacity: 1;
+}
+
+
+/* --- Bottom Dock Redesign: Bioluminescent Shelf --- */
+#bottom-dock {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 95%;
+    max-width: 600px;
+    z-index: 20;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(to top, rgba(10, 20, 44, 0.85), rgba(15, 28, 60, 0.75));
+    border-radius: 30px 30px 0 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    animation: dock-fade-in 0.5s 0.2s backwards;
+    border-top: 1px solid var(--glow-color-dark);
+}
+
+/* Glowing top edge accent */
+#bottom-dock::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--glow-color), transparent);
+    background-size: 60% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: blur(4px);
+    opacity: 0.9;
+}
+
+@keyframes dock-fade-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.dock-button {
+    background: transparent;
+    border: none;
+    color: var(--text-color-dim);
+    font-family: 'Kanit', sans-serif;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.3rem;
+    padding: 0.5rem;
+    position: relative;
+    width: 80px;
+    height: 70px;
+}
+.dock-button .button-icon { 
+    font-size: 1.5rem; 
+    transition: transform 0.3s ease, text-shadow 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+.dock-button .button-text { font-weight: 600; font-size: 0.75rem; }
+
+.dock-button:hover {
+    color: var(--text-color);
+}
+.dock-button:hover .button-icon {
+    text-shadow: 0 0 10px var(--highlight-glow), 0 0 20px var(--highlight-glow);
+    animation: bob-float 2s ease-in-out infinite;
+}
+@keyframes bob-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.dock-button::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, var(--glow-color-soft) 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0;
+    transition: transform 0.4s ease, opacity 0.3s ease;
+}
+.dock-button:hover::after {
+    transform: translateX(-50%) scale(1.5);
+    opacity: 1;
+}
+
+/* --- Notification Dot --- */
+.notification-dot {
+  position: absolute;
+  top: 8px;
+  /* Adjust to be relative to the icon, not the whole button */
+  left: calc(50% + 10px); 
+  width: 10px;
+  height: 10px;
+  background-color: #ff3b30;
+  border-radius: 50%;
+  border: 1px solid var(--primary-bg);
+  transform: scale(0);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 2;
+  box-shadow: 0 0 5px #ff3b30;
+}
+.dock-button.has-notification .notification-dot {
+  transform: scale(1);
+}
+
+/* --- Depart Modal (NEW STYLES) --- */
+#depart-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+#depart-overlay.hidden {
+    display: none;
+}
+#depart-overlay:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+}
+#depart-modal {
+  position: relative;
+  width: clamp(340px, 90vw, 420px);
+  background: linear-gradient(165deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
+  border: 1px solid var(--glow-color-dark);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#depart-overlay:not(.hidden) #depart-modal {
+  transform: scale(1);
+}
+#depart-modal h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--glow-color-dark);
+}
+
+.mission-briefing {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border: 1px solid var(--glow-color-dark);
+}
+.mission-briefing h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+.mission-briefing .instruction-list p {
+    font-size: 1rem;
+    color: var(--text-color-dim);
+    margin-bottom: 0.5rem;
+}
+.mission-briefing .instruction-list span {
+    font-weight: 700;
+    color: var(--highlight-glow);
+    min-width: 120px;
+    display: inline-block;
+}
+
+#depart-modal #confirm-depart-btn {
+  margin-top: auto; /* Push to bottom */
+  padding: 1rem;
+  border-radius: 50px;
+  border: none;
+  background: var(--highlight-color);
+  color: var(--primary-bg);
+  font-family: 'Kanit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 15px var(--highlight-color);
+}
+#depart-modal #confirm-depart-btn:hover {
+    box-shadow: 0 0 25px var(--highlight-color), 0 0 35px var(--highlight-color);
+    transform: scale(1.02);
+}
+
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    #user-profile { top: 15px; padding: 6px 10px; gap: 8px; }
+    #user-avatar { width: 30px; height: 30px; font-size: 18px; }
+    #user-level-badge { font-size: 0.65rem; padding: 1px 5px; }
+    #user-name { font-size: 0.9rem; }
+    .user-title-display { font-size: 0.7rem; }
+    
+    .center-button { transform: scale(0.8); }
+    .orbital-button { transform: scale(0.8); }
+    .orbital-button-wrapper:hover .orbital-button { transform: scale(0.85); }
+
+    #bottom-dock {
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        padding: 0.25rem 0.5rem;
+    }
+    .dock-button {
+        width: auto;
+        flex: 1;
+        padding: 0.25rem;
+        height: 60px;
+    }
+    .dock-button .button-icon { font-size: 1.25rem; }
+    .dock-button .button-text { font-size: 0.6rem; }
+
+    .notification-dot {
+      top: 4px;
+      width: 8px;
+      height: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    #user-name { font-size: 0.8rem; }
+    #user-profile { padding: 4px 10px; }
+    #user-profile:hover {
+      transform: translateX(-50%) translateY(0);
+    }
+    .dock-button .button-text {
+        font-size: 0.55rem;
+        white-space: nowrap;
+    }
+    .dock-button {
+        gap: 0.2rem;
+    }
+}
+
+/* --- Mobile Landscape Adjustments --- */
+@media (max-height: 500px) and (orientation: landscape) {
+    #user-profile {
+        top: 10px;
+        padding: 4px 8px;
+        gap: 6px;
+        /* FIX: Replace transform-based centering with a more stable method for landscape */
+        left: 0;
+        right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        transform: none;
+        width: max-content;
+        max-width: 90vw;
+    }
+    #user-profile:hover {
+        /* Adjust hover transform since we removed the base transform */
+        transform: translateY(-2px);
+    }
+    #user-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 16px;
+    }
+    #user-level-badge {
+        font-size: 0.6rem;
+    }
+    #user-name {
+        font-size: 0.8rem;
+    }
+
+    .main-content {
+        /* Constrain the vertical space to avoid overlap with header/footer */
+        padding-top: 45px;
+        padding-bottom: 55px;
+        box-sizing: border-box;
+    }
+
+    .center-button {
+        /* Make the central button smaller */
+        width: 100px;
+        height: 100px;
+    }
+    .center-button .button-icon { font-size: 2rem; }
+    .center-button .button-text { font-size: 0.9rem; }
+
+    .orbital-button {
+        /* Make orbiting buttons smaller */
+        width: 80px;
+        height: 80px;
+    }
+    .orbital-button .button-icon { font-size: 1.5rem; }
+    .orbital-button .button-text { font-size: 0.65rem; }
+
+    /* Make the hover effect less pronounced */
+    .orbital-button-wrapper:hover .orbital-button {
+        transform: scale(1.05);
+    }
+
+    #bottom-dock {
+        padding: 0.1rem 0.5rem;
+        max-width: 500px;
+    }
+
+    .dock-button {
+        height: 50px; /* Make dock shorter */
+        gap: 0.1rem;
+    }
+    .dock-button .button-icon {
+        font-size: 1.1rem;
+    }
+    .dock-button .button-text {
+        font-size: 0.55rem;
+    }
+    /* Weaken the hover effect on dock for smaller screens */
+    .dock-button:hover .button-icon {
+        animation: none;
+        transform: translateY(-2px);
+    }
+    .dock-button::after {
+        display: none; /* Disable the glow effect as it's too busy */
+    }
+}
+
+/* ADDED: Landscape Fix === Extra Landscape tuning (menu) === */
+@media (orientation: landscape) and (max-height: 520px) {
+  #menu-ui { padding: 0.25rem; }
+  #user-profile { top: 6px; padding: 4px 8px; }
+
+  .main-content { padding-top: 42px; padding-bottom: 50px; }
+  .center-button { width: 96px; height: 96px; }
+  .center-button .button-icon { font-size: 1.9rem; }
+  .center-button .button-text { font-size: 0.85rem; }
+
+  .orbital-button { width: 78px; height: 78px; }
+  .orbital-button .button-icon { font-size: 1.35rem; }
+  .orbital-button .button-text { font-size: 0.62rem; }
+
+  #bottom-dock { max-width: 520px; padding: 0.15rem 0.4rem; }
+  .dock-button { height: 48px; }
+  .dock-button .button-icon { font-size: 1.05rem; }
+  .dock-button .button-text { font-size: 0.54rem; }
+
+  .notification-dot {
+      top: 6px;
+      left: calc(50% + 8px);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 400px) {
+  .center-button { transform: scale(0.9); }
+  .orbital-button { transform: scale(0.9); }
+  #bottom-dock { transform: translateX(-50%) scale(0.95); }
+}

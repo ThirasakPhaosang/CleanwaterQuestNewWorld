@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Cleanwater Quest - Main Menu</title>
+    <link rel="stylesheet" href="menu.css" />
+    <link rel="stylesheet" href="daily-rewards.css" />
+    <link rel="stylesheet" href="missions.css" />
+    <link rel="stylesheet" href="profile.css" />
+    <link rel="stylesheet" href="customization.css" />
+    <link rel="stylesheet" href="upgrades.css" />
+    <link rel="stylesheet" href="reef.css" />
+    <link rel="stylesheet" href="leaderboard.css" />
+    <link rel="stylesheet" href="redeem.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&family=Poppins:wght@400;600;700&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+    <script type="importmap">
+    {
+      "imports": {
+        "firebase/": "https://aistudiocdn.com/firebase@^12.4.0/"
+      }
+    }
+    </script>
+</head>
+<body>
+    <!-- Transition overlay for the "receding water" reveal effect -->
+    <div id="page-transition">
+        <div class="wave-svg-container">
+            <!-- The waves now have embedded animations and realistic gradient fills -->
+             <svg class="wave-svg wave-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="wave-grad-1" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#007991" />
+                        <stop offset="100%" style="stop-color:#081a3d" />
+                    </linearGradient>
+                </defs>
+                <path fill="url(#wave-grad-1)">
+                  <animate attributeName="d" dur="15s" repeatCount="indefinite" values="M0,192L48,176C96,160,192,128,288,138.7C384,149,480,203,576,213.3C672,224,768,192,864,186.7C960,181,1056,203,1152,208C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,200L48,192C96,184,192,168,288,160C384,152,480,152,576,176C672,200,768,248,864,240C960,232,1056,168,1152,149.3C1248,130,1344,157,1392,170.7L1440,184L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,192L48,176C96,160,192,128,288,138.7C384,149,480,203,576,213.3C672,224,768,192,864,186.7C960,181,1056,203,1152,208C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;"></animate>
+                </path>
+            </svg>
+            <svg class="wave-svg wave-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                 <defs>
+                    <linearGradient id="wave-grad-2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00c4cc" />
+                        <stop offset="100%" style="stop-color:#007991" />
+                    </linearGradient>
+                </defs>
+                <path fill="url(#wave-grad-2)">
+                  <animate attributeName="d" dur="12s" repeatCount="indefinite" values="M0,224L48,208C96,192,192,160,288,170.7C384,181,480,235,576,256C672,277,768,267,864,229.3C960,192,1056,128,1152,117.3C1248,107,1344,149,1392,170.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,210L48,220C96,230,192,250,288,230C384,210,480,150,576,140C672,130,768,170,864,195C960,220,1056,230,1152,210C1248,190,1344,140,1392,115L1440,90L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,224L48,208C96,192,192,160,288,170.7C384,181,480,235,576,256C672,277,768,267,864,229.3C960,192,1056,128,1152,117.3C1248,107,1344,149,1392,170.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;"></animate>
+                </path>
+            </svg>
+            <svg class="wave-svg wave-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                 <defs>
+                    <linearGradient id="wave-grad-3" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00f6ff" />
+                        <stop offset="100%" style="stop-color:#00c4cc" />
+                    </linearGradient>
+                </defs>
+                <path fill="url(#wave-grad-3)">
+                  <animate attributeName="d" dur="18s" repeatCount="indefinite" values="M0,256L48,256C96,256,192,256,288,240C384,224,480,192,576,192C672,192,768,224,864,245.3C960,267,1056,277,1152,261.3C1248,245,1344,203,1392,181.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,240L48,224C96,208,192,176,288,186.7C384,197,480,251,576,261.3C672,272,768,235,864,218.7C960,203,1056,208,1152,224C1248,240,1344,267,1392,282.7L1440,298L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z; M0,256L48,256C96,256,192,256,288,240C384,224,480,192,576,192C672,192,768,224,864,245.3C960,267,1056,277,1152,261.3C1248,245,1344,203,1392,181.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;"></animate>
+                </path>
+            </svg>
+        </div>
+    </div>
+    <div id="app-container">
+        <!-- New Multi-layered background for 3D depth -->
+        <div id="depth-container">
+            <div class="depth-layer layer-far-bg"></div>
+            <div class="depth-layer layer-mid-bg"></div>
+            <div class="depth-layer layer-foreground-effects"></div>
+            <canvas id="interactive-canvas"></canvas>
+        </div>
+
+        <!-- Main Menu UI -->
+        <main id="menu-ui">
+            <!-- Profile Widget -->
+            <div id="user-profile">
+                <div class="user-avatar-container">
+                    <div id="user-avatar" class="user-avatar-emoji"></div>
+                    <div id="user-level-badge">LV 1</div>
+                </div>
+                <div class="user-info-text">
+                    <span id="user-name">Loading...</span>
+                    <span id="user-title" class="user-title-display"></span>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="center-cluster">
+                    <!-- Center "Depart" Button - The Sun of our system -->
+                    <button id="depart-btn" class="menu-button center-button">
+                        <span class="button-icon">▶</span>
+                        <span class="button-text">ออกเรือ</span>
+                    </button>
+                    
+                    <!-- Container for Orbiting Buttons -->
+                    <div id="orbital-container">
+                        <div class="orbital-button-wrapper" data-menu="missions">
+                            <div class="tendril"></div>
+                            <button class="menu-button orbital-button">
+                                <span class="button-icon">📜</span>
+                                <span class="button-text">ภารกิจ</span>
+                            </button>
+                        </div>
+                        <div class="orbital-button-wrapper" data-menu="upgrades">
+                            <div class="tendril"></div>
+                            <button class="menu-button orbital-button">
+                                <span class="button-icon">⚓</span>
+                                <span class="button-text">อัปเกรดเรือ</span>
+                            </button>
+                        </div>
+                        <div class="orbital-button-wrapper" data-menu="leaderboard">
+                             <div class="tendril"></div>
+                            <button class="menu-button orbital-button">
+                                <span class="button-icon">🏆</span>
+                                <span class="button-text">กระดานผู้นำ</span>
+                            </button>
+                        </div>
+                        <div class="orbital-button-wrapper" data-menu="reef">
+                             <div class="tendril"></div>
+                            <button class="menu-button orbital-button">
+                                <span class="button-icon">🐠</span>
+                                <span class="button-text">แนวปะการัง</span>
+                            </button>
+                        </div>
+                        <div class="orbital-button-wrapper" data-menu="customize">
+                             <div class="tendril"></div>
+                            <button class="menu-button orbital-button">
+                                <span class="button-icon">🎨</span>
+                                <span class="button-text">ปรับแต่งเรือ</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Static Bottom Dock for secondary actions -->
+            <div id="bottom-dock">
+                <button class="menu-button dock-button" data-menu="rewards">
+                    <span class="notification-dot"></span>
+                    <span class="button-icon">🎁</span>
+                    <span class="button-text">รางวัล</span>
+                </button>
+                <button class="menu-button dock-button" data-menu="redeem">
+                    <span class="button-icon">💎</span>
+                    <span class="button-text">แลกของ</span>
+                </button>
+                <button class="menu-button dock-button" data-menu="settings">
+                    <span class="button-icon">⚙️</span>
+                    <span class="button-text">ตั้งค่า</span>
+                </button>
+                <button id="logout-btn" class="menu-button dock-button">
+                    <span class="button-icon">🚪</span>
+                    <span class="button-text">ออกจากระบบ</span>
+                </button>
+            </div>
+
+        </main>
+        
+    </div>
+
+    <!-- Depart Confirmation Modal -->
+    <div id="depart-overlay" class="hidden">
+        <div id="depart-modal">
+            <button id="depart-close-btn" class="close-button" aria-label="Close">&times;</button>
+            <h2>ภารกิจเก็บขยะ</h2>
+            <div class="mission-briefing">
+                <h3>วิธีการเล่น</h3>
+                <div class="instruction-list">
+                    <p><span>ลากนิ้ว/เมาส์:</span> เคลื่อนที่เรือ</p>
+                    <p><span>แตะค้าง:</span> หย่อนตะขอ</p>
+                    <p><span>ปล่อย:</span> ดึงตะขอกลับ</p>
+                </div>
+            </div>
+            <button id="confirm-depart-btn">เริ่มภารกิจ</button>
+        </div>
+    </div>
+
+    <!-- Daily Rewards Modal -->
+    <div id="daily-rewards-overlay" class="hidden">
+        <div id="daily-rewards-modal">
+            <button id="daily-rewards-close-btn" class="close-button" aria-label="Close daily rewards">&times;</button>
+            <header>
+                <h2>🎁 รางวัลประจำวัน</h2>
+                <div class="header-divider"></div>
+            </header>
+            <div class="rewards-content-wrapper">
+                <div class="rewards-grid-container">
+                    <ul id="rewards-grid">
+                        <!-- Reward items will be dynamically injected here by TypeScript -->
+                    </ul>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-track">
+                        <div id="progress-bar" class="progress-fill"></div>
+                        <div id="progress-day-indicator" class="progress-indicator">Day 1</div>
+                    </div>
+                </div>
+            </div>
+            <footer>
+                <div id="eco-fact-container">
+                    <p class="eco-fact-title">🌱 Eco Fact</p>
+                    <p id="eco-fact-text">Loading fact...</p>
+                </div>
+                <button id="claim-reward-btn" disabled>
+                    <span class="button-text">รับรางวัล</span>
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Missions & Contracts Modal -->
+    <div id="missions-overlay" class="hidden">
+        <div id="missions-modal">
+            <button id="missions-close-btn" class="close-button" aria-label="Close missions">&times;</button>
+            <header id="missions-header">
+                <h2>📜 ภารกิจและสัญญา</h2>
+                <div class="missions-tabs">
+                    <button id="daily-quests-tab" class="mission-tab active" data-view="daily">ภารกิจรายวัน</button>
+                    <button id="weekly-contracts-tab" class="mission-tab" data-view="weekly">สัญญารายสัปดาห์</button>
+                </div>
+            </header>
+            <div id="missions-content">
+                <div id="daily-quests-view" class="missions-view active">
+                    <!-- Daily quest cards will be injected here -->
+                </div>
+                <div id="weekly-contracts-view" class="missions-view">
+                    <!-- Weekly contract cards will be injected here -->
+                </div>
+            </div>
+            <footer id="missions-footer">
+                <button id="refresh-quests-btn">
+                    🔄 รีเฟรชภารกิจ (1/1)
+                </button>
+                <p id="reset-timer">รีเซ็ตใน 23:59:59</p>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Player Profile Modal -->
+    <div id="profile-overlay" class="hidden">
+        <div id="profile-modal">
+            <button id="profile-close-btn" class="close-button" aria-label="Close profile">&times;</button>
+            
+            <div id="profile-header">
+                <div class="profile-avatar-wrapper">
+                    <div id="profile-avatar" class="profile-avatar-emoji"></div>
+                    <div id="profile-level-badge">LV 1</div>
+                </div>
+                <div class="profile-info">
+                    <h2 id="profile-display-name">Loading...</h2>
+                    <div class="profile-xp-bar">
+                        <div id="profile-xp-fill"></div>
+                        <span id="profile-xp-text">0 / 500 XP</span>
+                    </div>
+                    <div class="profile-currencies">
+                        <span id="profile-coins">💰 0</span>
+                        <span id="profile-coral">🌊 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-main-column">
+                <div id="profile-equipped-title" class="equipped-title-display"></div>
+    
+                <!-- MODIFIED: Removed tabs and combined content into a single scrollable area -->
+                <div id="profile-content">
+                    <div id="titles-view" class="profile-view active">
+                         <!-- Stats and Titles will be injected here by TS into this single view -->
+                    </div>
+                </div>
+    
+                <div id="profile-footer">
+                    <div id="guest-warning" class="hidden">
+                        <p>⚠️ ความคืบหน้าในฐานะผู้เล่น Guest จะไม่ถูกบันทึกข้ามอุปกรณ์</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customization Modal -->
+    <div id="customization-overlay" class="hidden">
+        <div id="customization-modal">
+            <button id="customization-close-btn" class="close-button" aria-label="Close customization">&times;</button>
+            <div id="customization-preview-area">
+                <h3>พรีวิวเรือ</h3>
+                <div id="ship-preview-container">
+                    <svg id="ship-preview-svg" viewBox="0 0 200 150">
+                        <defs>
+                            <pattern id="decal-wave" patternUnits="userSpaceOnUse" width="50" height="25">
+                                <path d="M 0 12.5 C 12.5 0, 37.5 25, 50 12.5" stroke="#fff" stroke-width="2" fill="none" />
+                            </pattern>
+                            <pattern id="decal-reef" patternUnits="userSpaceOnUse" width="40" height="40">
+                                <path d="M10,30 Q20,10 30,30 T50,30" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" />
+                            </pattern>
+                        </defs>
+                         <!-- Wake Trail (behind everything) -->
+                        <g id="ship-wake-trail" opacity="0">
+                            <path d="M 100 130 C 80 140, 70 150, 50 150" fill="none" stroke="url(#wakeGradient)" stroke-width="4" stroke-linecap="round" />
+                            <path d="M 100 130 C 120 140, 130 150, 150 150" fill="none" stroke="url(#wakeGradient)" stroke-width="4" stroke-linecap="round" />
+                        </g>
+                        <!-- Boat Body -->
+                        <g id="ship-body">
+                            <path id="ship-hull" d="M 20 100 C 20 120, 180 120, 180 100 L 150 70 L 50 70 Z" />
+                            <path id="ship-cabin" d="M 60 70 L 140 70 L 130 40 L 70 40 Z" fill="#a0b0c0" />
+                             <rect id="ship-decal-layer" x="20" y="70" width="160" height="50" fill="transparent" />
+                        </g>
+                        <!-- Flag -->
+                        <g id="ship-flag">
+                            <line x1="140" y1="70" x2="140" y2="20" stroke="#506070" stroke-width="3" />
+                            <path id="flag-canvas" d="M 140 20 C 155 15, 170 25, 185 20 L 185 40 C 170 45, 155 35, 140 40 Z" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+            <div id="customization-options-area">
+                <header id="customization-header">
+                    <h2>🎨 ปรับแต่งเรือ</h2>
+                    <div id="customization-tabs">
+                        <button class="customization-tab active" data-tab="color">สีเรือ</button>
+                        <button class="customization-tab" data-tab="flag">ธง</button>
+                        <button class="customization-tab" data-tab="decal">ลายเรือ</button>
+                        <button class="customization-tab" data-tab="trail">เอฟเฟกต์</button>
+                    </div>
+                </header>
+                <div id="customization-content">
+                    <div id="color-view" class="customization-view active"></div>
+                    <div id="flag-view" class="customization-view"></div>
+                    <div id="decal-view" class="customization-view"></div>
+                    <div id="trail-view" class="customization-view"></div>
+                </div>
+                <footer id="customization-footer">
+                    <button id="customization-reset-btn" class="footer-btn">ค่าเริ่มต้น</button>
+                    <button id="customization-confirm-btn" class="footer-btn primary">ยืนยัน</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ship Upgrades Modal -->
+    <div id="upgrades-overlay" class="hidden">
+        <div id="upgrades-modal">
+            <button id="upgrades-close-btn" class="close-button" aria-label="Close upgrades">&times;</button>
+            <header id="upgrades-header">
+                <h2>⚓ อัปเกรดเรือ</h2>
+                <p class="header-subtitle">เพิ่มประสิทธิภาพเรือของคุณเพื่อเก็บขยะได้มากขึ้น!</p>
+                <div id="upgrades-player-currency"></div>
+            </header>
+            <div id="upgrades-content">
+                <!-- Upgrade cards will be dynamically injected here -->
+            </div>
+            <footer id="upgrades-footer">
+                <div id="upgrade-eco-tip">
+                    <p>🌱 <strong>Eco Tip:</strong> เรือที่อัปเกรดแล้วช่วยให้เราทำความสะอาดทะเลได้เร็วขึ้น!</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Coral Reef Restoration Modal -->
+    <div id="reef-overlay" class="hidden">
+        <div id="reef-modal" class="reef-ui-panel">
+            <button id="reef-close-btn" class="close-button" aria-label="Close reef restoration">&times;</button>
+            <!-- Wrapper for landscape layout -->
+            <div class="reef-visualization-column">
+                <div id="reef-visualization">
+                    <!-- This div will be styled with a gradient that changes based on progress -->
+                    <div id="reef-milestone-toast" class="hidden"></div>
+                </div>
+            </div>
+            <!-- Wrapper for landscape layout -->
+            <div class="reef-content-column">
+                <header id="reef-header">
+                    <h2>🐠 ฟื้นฟูแนวปะการัง (Global Event)</h2>
+                    <div id="reef-global-progress">
+                        <div class="reef-progress-text">
+                            <span>ความคืบหน้าทั่วโลก</span>
+                            <span id="reef-progress-percentage">0%</span>
+                        </div>
+                        <div class="reef-progress-display">
+                            <div id="reef-progress-bar-fill"></div>
+                        </div>
+                    </div>
+                </header>
+                <div id="reef-contribution-area" class="reef-contribution-area">
+                    <div class="player-contribution-info">
+                        <p>คุณมี: <span id="player-fragments-count">🐚 0</span></p>
+                        <p>บริจาคแล้วทั้งหมด: <span id="player-total-contribution">🪸 0</span></p>
+                    </div>
+                    <div id="donation-buttons">
+                        <button class="donate-btn" data-amount="1">+1</button>
+                        <button class="donate-btn" data-amount="5">+5</button>
+                        <button class="donate-btn" data-amount="10">+10</button>
+                        <button class="donate-btn" data-amount="all">ทั้งหมด</button>
+                    </div>
+                    <div id="reef-eco-fact" class="eco-fact-box">
+                        <p>🌱 <strong>รู้หรือไม่?</strong></p>
+                        <span id="reef-fact-text">การปลูกปะการังใหม่ช่วยเพิ่มความหลากหลายทางชีวภาพ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-overlay" class="hidden">
+        <div id="leaderboard-modal">
+            <button id="leaderboard-close-btn" class="close-button" aria-label="Close leaderboard">&times;</button>
+            <header id="leaderboard-header">
+                <h2>🏆 กระดานผู้นำ</h2>
+                <div id="leaderboard-tabs">
+                    <button class="leaderboard-tab active" data-tab="weekly">สัปดาห์นี้</button>
+                    <button class="leaderboard-tab" data-tab="all-time">ตลอดกาล</button>
+                    <button class="leaderboard-tab" data-tab="reef">แนวปะการัง</button>
+                </div>
+            </header>
+            <div id="leaderboard-content">
+                <ul id="leaderboard-list">
+                    <!-- Leaderboard entries will be injected here by TypeScript -->
+                </ul>
+            </div>
+            <footer id="leaderboard-my-rank">
+                <!-- Player's rank will be injected here -->
+            </footer>
+        </div>
+    </div>
+
+    <!-- Redeem Rewards Modal -->
+    <div id="redeem-overlay" class="hidden">
+        <div id="redeem-modal">
+            <button id="redeem-close-btn" class="close-button" aria-label="Close redeem shop">&times;</button>
+            <header id="redeem-header">
+                <h2>💎 แลกของรางวัล</h2>
+                <div id="redeem-tabs">
+                    <button class="redeem-tab active" data-tab="all">🎁 รางวัลทั้งหมด</button>
+                    <button class="redeem-tab" data-tab="donation">🌱 การบริจาค</button>
+                    <button class="redeem-tab" data-tab="history">🧾 ประวัติ</button>
+                </div>
+            </header>
+            <main id="redeem-content">
+                <!-- Reward cards or history will be injected here -->
+            </main>
+            <footer id="redeem-footer">
+                <span id="player-currency-display"></span>
+            </footer>
+        </div>
+        <!-- Sub-dialog for confirmation, forms, etc. -->
+        <div id="redeem-dialog-overlay" class="hidden">
+            <div id="redeem-dialog">
+                <!-- Dialog content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module" src="menu.tsx"></script>
+    <script type="module" src="daily-rewards.tsx"></script>
+    <script type="module" src="missions.tsx"></script>
+    <script type="module" src="profile.tsx"></script>
+    <script type="module" src="customization.tsx"></script>
+    <script type="module" src="upgrades.tsx"></script>
+    <script type="module" src="reef.tsx"></script>
+    <script type="module" src="leaderboard.tsx"></script>
+    <script type="module" src="redeem.tsx"></script>
+</body>
+</html>

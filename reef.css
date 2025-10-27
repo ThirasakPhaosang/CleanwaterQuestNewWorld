@@ -1,0 +1,228 @@
+:root {
+  --reef-modal-width: clamp(360px, 95vw, 700px);
+  --reef-modal-height: clamp(600px, 90vh, 750px);
+  --reef-progress-bg: rgba(0,0,0,0.3);
+  --reef-progress-fill: linear-gradient(90deg, #38bdf8, #2dd4bf);
+  --reef-donate-btn-bg: #0e3a5a;
+  --reef-donate-btn-hover: #1e4f7a;
+}
+
+#reef-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#reef-overlay:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+}
+
+.reef-ui-panel {
+  position: relative;
+  width: var(--reef-modal-width);
+  height: var(--reef-modal-height);
+  background: linear-gradient(165deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
+  border: 1px solid var(--glow-color-dark);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#reef-overlay:not(.hidden) .reef-ui-panel {
+  transform: scale(1);
+}
+
+/* --- ADDED: Base styles for columns for portrait mode --- */
+.reef-visualization-column {
+    flex: 1; /* Let it take up the available free space */
+    display: flex;
+    min-height: 150px; /* Ensure it's visible even with no content */
+}
+
+.reef-content-column {
+    flex-shrink: 0; /* Don't let the controls shrink */
+    display: flex;
+    flex-direction: column;
+}
+
+
+#reef-header {
+  flex-shrink: 0;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+#reef-header h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  margin-bottom: 1rem;
+}
+
+#reef-global-progress {
+  width: 100%;
+}
+.reef-progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-color-dim);
+  margin-bottom: 0.25rem;
+}
+.reef-progress-display {
+  width: 100%;
+  height: 12px;
+  background-color: var(--reef-progress-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--glow-color-dark);
+}
+#reef-progress-bar-fill {
+  width: 0%; /* Set by JS */
+  height: 100%;
+  background: var(--reef-progress-fill);
+  border-radius: 6px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 8px var(--highlight-color);
+}
+
+#reef-visualization {
+  flex-grow: 1;
+  background-color: var(--profile-stat-bg);
+  border-radius: 16px;
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+  --health-percent: 0%; /* Controlled by JS */
+  background: 
+    linear-gradient(to top, 
+      rgba(20, 83, 45, calc(var(--health-percent) / 100 * 0.3)), /* Green tint for health */
+      transparent
+    ),
+    linear-gradient(to top, #1e293b, #0f172a); /* Base murky water */
+  transition: background 0.5s ease;
+}
+
+.reef-contribution-area {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 16px;
+}
+
+.player-contribution-info {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 1rem;
+}
+#player-fragments-count, #player-total-contribution {
+  color: var(--highlight-glow);
+}
+
+#donation-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+.donate-btn {
+  background-color: var(--reef-donate-btn-bg);
+  border: 1px solid var(--glow-color-dark);
+  color: var(--text-color);
+  padding: 0.75rem 0.5rem;
+  font-family: 'Kanit', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.donate-btn:hover:not(:disabled) {
+  background-color: var(--reef-donate-btn-hover);
+  border-color: var(--highlight-color);
+}
+.donate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.eco-fact-box {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid var(--glow-color-dark);
+  font-size: 0.8rem;
+  color: var(--text-color-dim);
+}
+.eco-fact-box p {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+/* Responsive & Landscape */
+@media (max-width: 480px) {
+    .reef-ui-panel {
+        padding: 1rem;
+    }
+    .reef-contribution-area {
+        padding: 0.75rem;
+    }
+    .donate-btn {
+        font-size: 0.9rem;
+        padding: 0.6rem 0.25rem;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+    .reef-ui-panel {
+        flex-direction: row;
+        height: 95vh;
+        width: 95vw;
+        max-width: 800px;
+        gap: 1.5rem;
+        padding: 1rem;
+    }
+    /* Left column for the visualization */
+    .reef-visualization-column {
+        flex: 3; /* Takes more space */
+        min-height: 0; /* Reset min-height for landscape flex */
+    }
+    #reef-visualization {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    /* Right column for header and controls */
+    .reef-content-column {
+        flex: 2; /* Takes less space */
+    }
+    
+    #reef-header {
+      margin-bottom: 1rem;
+    }
+
+    .reef-contribution-area {
+        flex-grow: 1;
+        justify-content: center;
+    }
+}

@@ -1,0 +1,46 @@
+                        }
+                    }
+                    // Draw seabed features visible this frame
+                    ctx.save();
+                    for (const f of seabedFeaturesRef.current) {
+                        const sx = f.x - worldScrollX*seabedParallax;
+                        if (sx < -60 || sx > w+60) continue;
+                        const y = getSeabedY(f.x) + 2;
+                        const s = f.scale;
+                        if (f.type === 'rock') {
+                            ctx.fillStyle = 'rgba(46,56,86,0.45)';
+                            ctx.beginPath(); ctx.ellipse(sx, y-12*s, 20*s, 12*s, 0, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = 'rgba(176,196,222,0.20)';
+                            ctx.beginPath(); ctx.ellipse(sx-6*s, y-15*s, 8*s, 4*s, -0.6, 0, Math.PI*2); ctx.fill();
+                        } else if (f.type === 'coral') {
+                            ctx.strokeStyle = 'rgba(255, 114, 159, 0.55)'; ctx.lineWidth = 3*s; ctx.lineCap = 'round';
+                            const baseY = y-6*s; const baseX = sx;
+                            ctx.beginPath(); ctx.moveTo(baseX, baseY);
+                            ctx.bezierCurveTo(baseX-6*s, baseY-20*s, baseX-10*s, baseY-30*s, baseX-6*s, baseY-44*s);
+                            ctx.moveTo(baseX, baseY);
+                            ctx.bezierCurveTo(baseX+6*s, baseY-18*s, baseX+10*s, baseY-28*s, baseX+8*s, baseY-40*s);
+                            ctx.moveTo(baseX-4*s, baseY-24*s);
+                            ctx.bezierCurveTo(baseX-10*s, baseY-30*s, baseX-14*s, baseY-38*s, baseX-12*s, baseY-46*s);
+                            ctx.stroke();
+                        } else if (f.type === 'weed') {
+                            ctx.strokeStyle = 'rgba(34,197,94,0.35)'; ctx.lineWidth = 2*s; ctx.lineCap='round';
+                            for (let k=0;k<3;k++) {
+                                ctx.beginPath(); const bx = sx - 6*s + k*6*s; const by = y;
+                                ctx.moveTo(bx, by);
+                                ctx.bezierCurveTo(bx-4*s, by-10*s, bx+2*s, by-22*s, bx-2*s, by-38*s);
+                                ctx.stroke();
+                            }
+                        } else if (f.type === 'star') {
+                            const r = 6*s; const cx = sx, cy = y-10*s;
+                            ctx.fillStyle = 'rgba(255,179,71,0.45)';
+                            ctx.beginPath();
+                            for (let i=0;i<5;i++){ const a = i*2*Math.PI/5 - Math.PI/2; const ax = cx + Math.cos(a)*r; const ay = cy + Math.sin(a)*r; const b = a + Math.PI/5; const bx = cx + Math.cos(b)*(r*0.45); const by = cy + Math.sin(b)*(r*0.45); if(i===0) ctx.moveTo(ax,ay); else ctx.lineTo(ax,ay); ctx.lineTo(bx,by); }
+                            ctx.closePath(); ctx.fill();
+                        }
+                    }
+                    ctx.restore();
+
+                    // Underwater dust motes (reduced on low-end)
+                    if (underDustRef.current.length === 0) {
+                        const n = isLowEnd ? 30 : (isMobile ? 50 : 90);
+                        for (let i=0;i<n;i++) underDustRef.current.push({ x: Math.random()*w, y: waterLine + Math.random()*(h-waterLine-20), vx: -5 + Math.random()*10, vy: -5 + Math.random()*10, alpha: 0.05 + Math.random()*0.08, size: 0.7 + Math.random()*1.2 });
