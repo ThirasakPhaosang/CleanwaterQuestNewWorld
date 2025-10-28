@@ -1,0 +1,16 @@
+﻿const HUD: FC<{ collected: number, maxCapacity: number, score: number }> = ({ collected, maxCapacity, score }) => (
+    <div id="game-hud">
+        <div className="hud-element-wrapper"><div className="hud-element capacity-bar"><span>{ud('hud_collected=%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%9A%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7%3A'.split('=')[1])} {collected}/{maxCapacity}</span><div className="capacity-bar-bg"><div className="capacity-bar-fill" style={{ width: ${(collected / maxCapacity) * 100}% }}></div></div></div></div>
+        <div className="hud-element-wrapper"><div className="hud-element game-score"><span>{ud('score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%3A'.split('=')[1])} {score}</span></div></div>
+        {/* fullscreen button intentionally removed */}
+    </div>
+);State, useEffect, useLayoutEffect, useRef, useCallback, useMemo, FC, DragEvent, TouchEvent as ReactTouchEvent } from 'react';
+import { createRoot } from 'react-dom/client';
+import { gsap } from 'gsap';
+// FIX: Switched to Firebase v8 compatibility imports.
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import { getPlayerProfile, savePlayerProfile, PlayerProfile, getXpForLevel } from './profile-data';
+import { recordGameSession } from './firestore';
+// Helpers to keep strings safe in non-UTF8 files
+const ud = (s: string) => decodeURIComponent(s);

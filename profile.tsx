@@ -35,6 +35,13 @@ const coralEl = document.getElementById('profile-coral');
 const equippedTitleEl = document.getElementById('profile-equipped-title');
 
 const titlesView = document.getElementById('titles-view');
+// Edit controls
+const editToggleBtn = document.getElementById('edit-profile-toggle') as HTMLButtonElement | null;
+const editPanel = document.getElementById('profile-edit') as HTMLDivElement | null;
+const nameInput = document.getElementById('display-name-input') as HTMLInputElement | null;
+const emojiGrid = document.getElementById('avatar-emoji-grid') as HTMLDivElement | null;
+const saveBtn = document.getElementById('save-profile-btn') as HTMLButtonElement | null;
+const cancelBtn = document.getElementById('cancel-profile-btn') as HTMLButtonElement | null;
 
 const guestWarning = document.getElementById('guest-warning');
 
@@ -144,6 +151,31 @@ function renderProfile(profile: PlayerProfile, isGuest: boolean) {
 
     // Guest Warning
     guestWarning.classList.toggle('hidden', !isGuest);
+
+    // Prefill edit controls
+    if (nameInput) nameInput.value = profile.displayName;
+    if (emojiGrid) {
+        const CHOICES = ['😀','😄','😎','🧜‍♂️','🧜‍♀️','🐬','🐟','🐠','🦈','🐢','🚤','⛵️','⚓️','🌊','🐳','🐙','🦀','🪸','⭐️','🌟'];
+        emojiGrid.innerHTML = '';
+        CHOICES.forEach((em) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = em;
+            b.style.cssText = 'font-size:22px;padding:6px;border-radius:8px;border:1px solid #2b3b4b;background:#0e1a2b;color:#fff;cursor:pointer;';
+            if (profile.avatarId === em) b.classList.add('selected');
+            b.addEventListener('click', () => {
+                // simple selection highlight
+                emojiGrid.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
+                b.classList.add('selected');
+                profileAvatar.textContent = em;
+                if (nameInput && nameInput.value.trim().length === 0) nameInput.value = profile.displayName;
+                // store on element for save
+                (emojiGrid as any).selectedEmoji = em;
+            });
+            emojiGrid.appendChild(b);
+        });
+        (emojiGrid as any).selectedEmoji = profile.avatarId;
+    }
 }
 
 // --- EVENT HANDLERS ---
@@ -199,6 +231,41 @@ function initProfile() {
     });
 
     titlesView.addEventListener('click', handleEquipTitle);
+
+    // Edit UI
+    if (editToggleBtn && editPanel && titlesView) {
+        editToggleBtn.addEventListener('click', () => {
+            const isShown = editPanel.style.display !== 'none';
+            editPanel.style.display = isShown ? 'none' : 'flex';
+            titlesView.classList.toggle('active', isShown); // show titles when edit is hidden
+        });
+    }
+    if (saveBtn && cancelBtn && nameInput && emojiGrid) {
+        cancelBtn.addEventListener('click', () => {
+            // just hide editor
+            if (editPanel) editPanel.style.display = 'none';
+            if (titlesView) titlesView.classList.add('active');
+        });
+        saveBtn.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const p = getPlayerProfile(user);
+            // name validation
+            const newName = (nameInput.value || '').trim();
+            if (newName.length < 2) { alert('ชื่อต้องยาวอย่างน้อย 2 ตัวอักษร'); return; }
+            p.displayName = newName;
+            const selectedEmoji = (emojiGrid as any).selectedEmoji || p.avatarId;
+            p.avatarId = selectedEmoji;
+            savePlayerProfile(p);
+            renderProfile(p, user.isAnonymous);
+            const userNameEl = document.getElementById('user-name');
+            const userAvatarEl = document.getElementById('user-avatar') as HTMLDivElement | null;
+            if (userNameEl) userNameEl.textContent = p.displayName;
+            if (userAvatarEl) userAvatarEl.textContent = p.avatarId;
+            if (editPanel) editPanel.style.display = 'none';
+            if (titlesView) titlesView.classList.add('active');
+        });
+    }
 }
 
 initProfile();

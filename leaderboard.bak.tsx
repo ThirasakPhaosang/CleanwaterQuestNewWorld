@@ -1,4 +1,4 @@
-// Leaderboard (rebuild) — realtime + Thai-safe labels
+﻿// Leaderboard (rebuild) — realtime + Thai-safe labels
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
@@ -10,8 +10,6 @@ const L_CORRECT = ud('%E0%B8%96%E0%B8%B9%E0%B8%81%E0%B8%95%E0%B9%89%E0%B8%AD%E0%
 const L_BEST = ud('%E0%B8%94%E0%B8%B5%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%AA%E0%B8%B8%E0%B8%94');
 const L_NO_RANK = ud('%E0%B8%A2%E0%B8%B1%E0%B8%87%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B8%B9%E0%B8%A5%E0%B8%88%E0%B8%B1%E0%B8%94%E0%B8%AD%E0%B8%B1%E0%B8%99%E0%B8%94%E0%B8%B1%E0%B8%9A');
 const L_REEF_SUB = ud('%E0%B8%A2%E0%B8%AD%E0%B8%94%E0%B8%AA%E0%B8%A1%E0%B8%97%E0%B8%9A%E0%B9%81%E0%B8%99%E0%B8%A7%E0%B8%9B%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%B1%E0%B8%87%E0%B8%A3%E0%B8%A7%E0%B8%A1');
-const L_LEFT = ud('%E0%B9%80%E0%B8%AB%E0%B8%A5%E0%B8%B7%E0%B8%AD%E0%B9%80%E0%B8%A7%E0%B8%A5%E0%B8%B2%E0%B8%AD%E0%B8%B5%E0%B8%81');
-const L_REWARD_NOTE = ud('%E0%B8%A3%E0%B8%B2%E0%B8%87%E0%B8%A7%E0%B8%B1%E0%B8%A5%E0%B8%AA%E0%B8%B3%E0%B8%AB%E0%B8%A3%E0%B8%B1%E0%B8%9A%20100%20%E0%B8%AD%E0%B8%B1%E0%B8%99%E0%B8%94%E0%B8%B1%E0%B8%9A%E0%B9%81%E0%B8%A3%E0%B8%81%3A%20%E0%B8%98%E0%B8%87%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%AA%E0%B8%B5%E0%B9%80%E0%B8%A3%E0%B8%B7%E0%B8%AD%E0%B8%9E%E0%B8%B4%E0%B9%80%E0%B8%A8%E0%B8%A9');
 
 const firebaseConfig = {
   apiKey: 'AIzaSyAAXqmfSy_q_Suh4td5PeLz-ZsuICf-KwI',
@@ -44,14 +42,11 @@ const closeBtn = document.getElementById('leaderboard-close-btn');
 const tabsContainer = document.getElementById('leaderboard-tabs');
 const listEl = document.getElementById('leaderboard-list');
 const myRankEl = document.getElementById('leaderboard-my-rank');
-const headerEl = document.getElementById('leaderboard-header');
-let metaEl: HTMLElement | null = null;
 
 // State
 let currentTab: LeaderboardTab = 'weekly';
 let currentPlayer: firebase.User | null = null;
 let unsubscribeLeaderboard: (() => void) | null = null;
-let countdownTimer: number | null = null;
 
 function formatScore(score: number): string {
   return score > 1000 ? `${(score / 1000).toFixed(1)}k` : score.toLocaleString();
@@ -134,34 +129,6 @@ function subscribeLeaderboard() {
   } catch {}
 }
 
-function getNextWeekReset(): Date {
-  const now = new Date();
-  const day = now.getDay();
-  const daysUntilMonday = (8 - day) % 7;
-  const next = new Date(now);
-  next.setHours(0,0,0,0);
-  next.setDate(now.getDate() + daysUntilMonday);
-  return next;
-}
-
-function startCountdown() {
-  if (!metaEl) return;
-  const lbCountdown = metaEl.querySelector('#lb-countdown') as HTMLElement | null;
-  if (!lbCountdown) return;
-  function tick() {
-    const end = getNextWeekReset().getTime();
-    const now = Date.now();
-    let ms = Math.max(0, end - now);
-    const days = Math.floor(ms / 86400000); ms -= days*86400000;
-    const hrs = Math.floor(ms / 3600000); ms -= hrs*3600000;
-    const mins = Math.floor(ms / 60000);
-    lbCountdown.textContent = `${L_LEFT}: ${days} วัน ${hrs} ชม. ${mins} นาที`;
-  }
-  tick();
-  if (countdownTimer) window.clearInterval(countdownTimer);
-  countdownTimer = window.setInterval(tick, 30000);
-}
-
 function handleTabClick(e: Event) {
   const target = e.currentTarget as HTMLElement;
   const tab = target.dataset.tab as LeaderboardTab;
@@ -170,31 +137,18 @@ function handleTabClick(e: Event) {
   tabsContainer?.querySelector('.active')?.classList.remove('active');
   target.classList.add('active');
   subscribeLeaderboard();
-  if (currentTab === 'weekly') { startCountdown(); metaEl?.classList.remove('is-hidden'); }
-  else { metaEl?.classList.add('is-hidden'); }
 }
 
 function closeModal() {
   overlay?.classList.add('hidden');
   if (unsubscribeLeaderboard) { unsubscribeLeaderboard(); unsubscribeLeaderboard = null; }
-  if (countdownTimer) { window.clearInterval(countdownTimer); countdownTimer = null; }
 }
 
 function initLeaderboard() {
   if (!overlay || !closeBtn || !tabsContainer || !listEl || !myRankEl) return;
-  if (headerEl && !document.getElementById('leaderboard-meta')) {
-    metaEl = document.createElement('div');
-    metaEl.id = 'leaderboard-meta';
-    metaEl.innerHTML = `<span id=\"lb-countdown\"></span><span id=\"lb-reward\">รางวัลสำหรับ 100 อันดับแรก: โบนัสเหรียญจำนวนมาก</span>`;
-    headerEl.appendChild(metaEl);
-  } else {
-    metaEl = document.getElementById('leaderboard-meta') as HTMLElement | null;
-  }
   closeBtn.addEventListener('click', closeModal);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
   tabsContainer.querySelectorAll('.leaderboard-tab').forEach(tab => tab.addEventListener('click', handleTabClick));
-  if (currentTab === 'weekly') { startCountdown(); metaEl?.classList.remove('is-hidden'); }
-  else { metaEl?.classList.add('is-hidden'); }
 }
 
 initLeaderboard();
@@ -205,3 +159,4 @@ export function openLeaderboardModal() {
   overlay.classList.remove('hidden');
   subscribeLeaderboard();
 }
+

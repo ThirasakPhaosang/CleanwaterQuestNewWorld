@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, FC, DragEvent, TouchEvent as ReactTouchEvent } from 'react';
+﻿import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, FC, DragEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { gsap } from 'gsap';
 // FIX: Switched to Firebase v8 compatibility imports.
@@ -60,7 +60,8 @@ interface GameObject {
 const WORLD_WIDTH = 4000;
 const WATER_LEVEL_VH = 35;
 const HOOK_MAX_LENGTH_OFFSET = 50;
-const BASE_HOOK_SPEED = 500;
+// Slow hook a bit for better control on mobile
+const BASE_HOOK_SPEED = 420;
 const TRASH_DATA: Record<TrashId, TrashData> = {
   bottle: { name: ud('item_bottle=%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81'.split('=')[1]), icon: cp(0x1F9F4), type: 'recyclable', points: 10, weight: 1.2, ecoFact: ud('fact_bottle=%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%201%20%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B9%80%E0%B8%A7%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B9%88%E0%B8%AD%E0%B8%A2%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B8%A3%E0%B8%B2%E0%B8%A7%20450%20%E0%B8%9B%E0%B8%B5'.split('=')[1]) },
   can: { name: ud('item_can=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%9B%E0%B9%8B%E0%B8%AD%E0%B8%87%E0%B8%AD%E0%B8%A5%E0%B8%B9%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1'.split('=')[1]), icon: cp(0x1F96B), type: 'recyclable', points: 15, weight: 1.5, ecoFact: ud('fact_can=%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B8%AD%E0%B8%A5%E0%B8%B9%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A2%E0%B8%B1%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B1%E0%B8%87%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%93%2095%25'.split('=')[1]) },
@@ -78,7 +79,8 @@ const TRASH_DATA: Record<TrashId, TrashData> = {
 };
 const DAY_CYCLE_DURATION_S = 240;
 
-const getCapacityForLevel = (level: number) => 5 + 3 * (level - 1);
+// Start capacity increased to 10 items as requested
+const getCapacityForLevel = (level: number) => 10 + 3 * (level - 1);
 const getHookSpeedMultiplier = (level: number) => 1 + (level - 1) * 0.15;
 
 
@@ -683,6 +685,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
         // Long-press threshold for mobile to drop hook (avoid dropping while dragging boat)
         let dropTimer: number | null = null;
         let touchStartX = 0, touchStartY = 0;
+        let inSteerZone = false;
         const startLowering = (clientX:number, clientY:number) => {
             if (hookState.current.status !== 'idle' || isPaused || collectedRef.current.length >= maxCapacity) return;
             const worldScrollX = gsap.getProperty(gameWorldRef.current, "x") as number;
@@ -702,7 +705,11 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             if ('touches' in e) {
                 const t = e.touches[0];
                 touchStartX = t.clientX; touchStartY = t.clientY;
-                dropTimer = window.setTimeout(() => { startLowering(t.clientX, t.clientY); dropTimer = null; }, 240);
+                // Bottom screen area reserved for steering only (no drop)
+                inSteerZone = t.clientY > window.innerHeight * 0.82;
+                if (!inSteerZone) {
+                    dropTimer = window.setTimeout(() => { startLowering(t.clientX, t.clientY); dropTimer = null; }, 300);
+                }
             } else {
                 startLowering((e as MouseEvent).clientX, (e as MouseEvent).clientY);
             }
@@ -715,12 +722,22 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
         };
         const handleMove = (e: MouseEvent | TouchEvent) => {
             if (isPaused) return;
+            // Ignore drags originating from on-screen mobile controls to avoid jumps
+            const tgt = e.target as HTMLElement;
+            if (tgt && tgt.closest && tgt.closest('.mobile-controls')) return;
             const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
             const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
             // If user moved finger before long-press fired, cancel dropping
             if ('touches' in e && dropTimer) {
                 const dx = clientX - touchStartX, dy = clientY - touchStartY;
                 if (dx*dx + dy*dy > 18*18) { clearTimeout(dropTimer); dropTimer = null; }
+            }
+            // Lock steering while hook is active for easier play on mobile
+            if (hookState.current.status !== 'idle') { return; }
+            // Steering zone: never drop, only move boat target
+            if ('touches' in e && inSteerZone) {
+                boatPos.current.targetX = clientX;
+                return;
             }
             boatPos.current.targetX = clientX;
             gsap.to([cursorDotRef.current, cursorRingRef.current], {
@@ -1377,9 +1394,10 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                 moon: getInterpolatedValue(progress, DAY_CYCLE_KEYFRAMES.moon),
             };
         
-            const targetX = Math.max(100, Math.min(window.innerWidth - 100, boatPos.current.targetX));
-            // Slow down boat movement for better mobile control
-            const follow = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ? 0.045 : 0.08;
+            const hookActive = hookState.current.status !== 'idle';
+            const targetX = hookActive ? boatPos.current.x : Math.max(100, Math.min(window.innerWidth - 100, boatPos.current.targetX));
+            // Slow down boat movement further for easier mobile control
+            const follow = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ? 0.015 : 0.04;
             boatPos.current.x += (targetX - boatPos.current.x) * follow;
             const boatScreenX = boatPos.current.x;
             const scrollRatio = boatScreenX / window.innerWidth;
@@ -1720,7 +1738,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                     if (trash.type === 'trash' && !trash.caught) {
                         const dx = hookWorldX - trash.x;
                         const dy = hookWorldY - trash.y;
-                        if (dx * dx + dy * dy < 40 * 40) {
+                        if (dx * dx + dy * dy < 52 * 52) {
                             hookState.current.caught = trash;
                             trash.caught = true;
                             hookState.current.status = 'raising';
@@ -1755,9 +1773,52 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             window.removeEventListener('mousemove', handleMove);
             window.removeEventListener('touchmove', handleMove);
             if (gameWorldRef.current) gameWorldRef.current.innerHTML = '';
+            // Cancel any pending mobile movement animation frame to avoid leaks or stray motion
+            if (mobileMove.current && mobileMove.current.raf) {
+                cancelAnimationFrame(mobileMove.current.raf as number);
+                mobileMove.current.raf = 0;
+                mobileMove.current.dir = 0;
+                mobileMove.current.vx = 0;
+            }
         };
     }, [isPaused, profile, maxCapacity, getWaveHeightAndSlope, spawnObject, onCollectionComplete]);
     
+    const isMobile = (typeof window !== 'undefined') && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        // Mobile move with soft acceleration/deceleration
+    const clampX = (x:number) => Math.max(100, Math.min(window.innerWidth - 100, x));
+    const mobileMove = useRef<{ dir: -1|0|1; vx: number; raf: number|0 }>({ dir: 0, vx: 0, raf: 0 });
+    const mobileStep = () => {
+        const st = mobileMove.current; const accel = 0.28; const damping = 0.88;
+        const maxV = Math.max(2.2, window.innerWidth * 0.0035);
+        if (st.dir !== 0) st.vx = Math.max(-maxV, Math.min(maxV, st.vx + st.dir * accel));
+        else st.vx *= damping;
+        if (Math.abs(st.vx) < 0.05 && st.dir === 0) { st.vx = 0; st.raf = 0; return; }
+        boatPos.current.targetX = clampX(boatPos.current.targetX + st.vx);
+        st.raf = requestAnimationFrame(mobileStep);
+    };
+    const startMove = (dir: -1 | 1) => { const st = mobileMove.current; st.dir = dir; if (!st.raf) st.raf = requestAnimationFrame(mobileStep); };
+    const stopMove = (dir: -1 | 1) => { if (mobileMove.current.dir === dir) mobileMove.current.dir = 0; };
+const tapDrop = () => {
+        if (isPaused) return;
+        // Drop
+        if (hookState.current.status === 'idle' && collectedRef.current.length < maxCapacity) {
+            const worldScrollX = gsap.getProperty(gameWorldRef.current, 'x') as number;
+            const worldX = boatPos.current.x - (worldScrollX as number);
+            hookState.current.status = 'lowering';
+            hookState.current.targetX = worldX;
+            hookState.current.targetY = Math.min(window.innerHeight * 0.78, window.innerHeight - HOOK_MAX_LENGTH_OFFSET);
+            gameContainerRef.current?.classList.add('is-hook-active');
+            // ripple visual
+            const waterLine = window.innerHeight * (WATER_LEVEL_VH / 100);
+            ripplesRef.current.push({ x: boatPos.current.x, y: waterLine - 2, r: 4, life: 1 });
+        } else if (hookState.current.status !== 'idle') {
+            // Raise immediately
+            hookState.current.status = 'raising';
+            hookState.current.targetY = 0;
+            gameContainerRef.current?.classList.remove('is-hook-active');
+        }
+    };
+
     return (
         <div ref={gameContainerRef} className="game-container collection-game-container">
             {/* Background/Environment layers */}
@@ -1772,6 +1833,15 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             <svg className="line-svg"><path ref={lineRef} stroke="#2b2b2b" strokeWidth="2.5" fill="none" strokeLinecap="round" /></svg>
             <BoatSVG ref={boatRef} customization={profile.customization} />
             <HUD collected={collected.length} maxCapacity={maxCapacity} score={0} onToggleFullscreen={toggleFullscreen} isFullscreen={isFullscreen} />
+            {isMobile && (
+              <div className="mobile-controls" aria-hidden="false">
+                <div className="mc-row">
+                  <button className="mc-btn" onTouchStart={() => startMove(-1)} onTouchEnd={() => stopMove(-1)} onMouseDown={() => startMove(-1)} onMouseUp={() => stopMove(-1)} aria-label="Left">◀</button>
+                  <button className="mc-btn primary" onClick={tapDrop} onTouchStart={(e)=>{ e.preventDefault(); tapDrop(); }} onMouseDown={(e)=>{ e.preventDefault(); tapDrop(); }} aria-label="Drop Hook">{cp(0x1FA9D)}</button>
+                  <button className="mc-btn" onTouchStart={() => startMove(1)} onTouchEnd={() => stopMove(1)} onMouseDown={() => startMove(1)} onMouseUp={() => stopMove(1)} aria-label="Right">▶</button>
+                </div>
+              </div>
+            )}
             {/* คำใบ้เล็กๆ สำหรับมือถือ จะโชว์ชั่วคราว ไม่รบกวนการเล่น */}
             {showHint && (
                 <div className="tutorial-tooltip">
@@ -1795,19 +1865,13 @@ const BoatSVG = React.forwardRef<SVGSVGElement, { customization: PlayerProfile['
     </svg>
 ));
 
-const HUD: FC<{ collected: number, maxCapacity: number, score: number, onToggleFullscreen?: () => void, isFullscreen?: boolean }> = ({ collected, maxCapacity, score, onToggleFullscreen, isFullscreen }) => (
+const HUD: FC<{ collected: number, maxCapacity: number, score: number }> = ({ collected, maxCapacity, score }) => (
     <div id="game-hud">
         <div className="hud-element-wrapper"><div className="hud-element capacity-bar"><span>{ud('hud_collected=%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%9A%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7%3A'.split('=')[1])} {collected}/{maxCapacity}</span><div className="capacity-bar-bg"><div className="capacity-bar-fill" style={{ width: `${(collected / maxCapacity) * 100}%` }}></div></div></div></div>
-        <div className="hud-element-wrapper"><div className="hud-element game-score"><span>{ud('score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%3A'.split('=')[1])} {score}</span></div></div>
-        <div className="hud-element-wrapper"><button className="hud-fs-btn" onClick={onToggleFullscreen} title={isFullscreen ? ud('exit_fs=%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B9%80%E0%B8%95%E0%B9%87%E0%B8%A1%E0%B8%88%E0%B8%AD'.split('=')[1]) : ud('enter_fs=%E0%B9%80%E0%B8%95%E0%B9%87%E0%B8%A1%E0%B8%88%E0%B8%AD'.split('=')[1])}>⤢</button></div>
+        <div className="hud-element-wrapper score"><div className="hud-element game-score"><span>{ud('score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%3A'.split('=')[1])} {score}</span></div></div>
+        {/* fullscreen button intentionally removed */}
     </div>
 );
-
-interface ResultsScreenProps {
-  stats: { score: number; collected: number; sortedCorrectly: number; incorrect: number };
-  gains: { xp: number; coins: number; coralFragments: number };
-  isVisible: boolean;
-}
 const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
     <div className={`game-overlay ${isVisible ? 'visible' : ''}`}>
         <div className="popup-dialog">

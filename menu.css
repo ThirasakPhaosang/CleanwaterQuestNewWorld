@@ -20,6 +20,118 @@
   padding: 0;
 }
 
+/* Global utility: ensure elements with `hidden` are not rendered */
+.hidden { display: none !important; }
+
+/* Popup overlays (login/logout) */
+#login-required-overlay,
+#logout-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(1, 4, 16, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* Themed dialog shared look (matches game.css tone) */
+.popup-dialog {
+  width: clamp(320px, 92vw, 460px);
+  background: linear-gradient(165deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
+  color: var(--text-color);
+  border: 1px solid var(--glow-color-dark);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.06);
+  padding: 1.25rem 1.25rem 1rem;
+  transform: translateY(8px) scale(0.98);
+  opacity: 0;
+  animation: popup-in 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popup-in { to { transform: translateY(0) scale(1); opacity: 1; } }
+
+.popup-dialog h3 {
+  font-family: 'Rajdhani', 'Kanit', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.25rem, 3.6vw, 1.6rem);
+  margin: 0 0 0.35rem 0;
+  color: var(--highlight-glow);
+  letter-spacing: 0.02em;
+}
+.popup-dialog p {
+  margin: 0;
+  color: var(--text-color-dim);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.7rem;
+  flex-wrap: wrap;
+}
+
+/* Unified button styling used across modals */
+.menu-button {
+  --btn-bg: var(--glass-bg);
+  --btn-text: var(--text-color);
+  --btn-border: var(--glow-color-dark);
+  appearance: none;
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  padding: 0.65rem 1.1rem;
+  border-radius: 12px;
+  font-family: 'Kanit', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.menu-button:hover { transform: translateY(-1px); box-shadow: 0 8px 22px var(--glow-color-dark); }
+.menu-button:active { transform: translateY(0); }
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--highlight-color), #00c4cc);
+  color: var(--primary-bg);
+  border-color: transparent;
+  box-shadow: 0 0 15px rgba(0, 246, 255, 0.35);
+}
+.btn-primary:hover { box-shadow: 0 0 24px rgba(0, 246, 255, 0.45); }
+
+.btn-secondary { background: rgba(255,255,255,0.06); }
+
+.btn-danger {
+  background: linear-gradient(180deg, #ef4444, #be123c);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+}
+.btn-danger:hover { box-shadow: 0 0 22px rgba(239, 68, 68, 0.45); }
+
+/* Mobile-friendly actions: stack buttons full-width */
+@media (max-width: 520px), (max-height: 520px) {
+  .popup-actions { justify-content: stretch; }
+  .popup-actions .menu-button { flex: 1 1 160px; min-height: 42px; }
+  .popup-dialog { padding: 1rem; }
+}
+
+/* Map IDs from HTML to themed button variants */
+#login-go-btn { background: linear-gradient(180deg, var(--highlight-color), #00c4cc); color: var(--primary-bg); border-color: transparent; box-shadow: 0 0 15px rgba(0, 246, 255, 0.35); }
+#logout-confirm-btn { background: linear-gradient(180deg, #ef4444, #be123c); color: #fff; border-color: transparent; box-shadow: 0 0 14px rgba(239,68,68,0.35); }
+#login-cancel-btn, #logout-cancel-btn { background: rgba(255,255,255,0.06); }
+
 html,
 body {
   height: 100%;

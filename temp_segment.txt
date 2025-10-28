@@ -1,0 +1,14 @@
+﻿// Simple translucent mobile controls: ◀ Drop ▶
+    const leftHold = useRef<number | null>(null);
+    const rightHold = useRef<number | null>(null);
+    const step = () => Math.max(6, Math.round(window.innerWidth * 0.012));
+    const clampX = (x:number) => Math.max(100, Math.min(window.innerWidth - 100, x));
+    const startMove = (dir: -1 | 1) => {
+        const tick = () => { boatPos.current.targetX = clampX(boatPos.current.targetX + dir * step()); };
+        tick();
+        const id = window.setInterval(tick, 28);
+        if (dir === -1) leftHold.current = id; else rightHold.current = id;
+    };
+    const stopMove = (dir: -1 | 1) => {
+        const id = dir === -1 ? leftHold.current : rightHold.current;
+        if (id) { window.clearInterval(id); if (dir === -1) leftHold.current = null; 

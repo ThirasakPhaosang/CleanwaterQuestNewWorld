@@ -64,13 +64,40 @@ auth.onAuthStateChanged((user) => {
 });
 
 function setupMenuActions() {
-    const logoutHandler = async () => {
-        try {
-          // FIX: Switched to Firebase v8 compatibility sign-out syntax.
-          await auth.signOut();
-        } catch (error) {
-          console.error('Error during sign-out:', error);
+    const loginOverlay = document.getElementById('login-required-overlay');
+    const loginGoBtn = document.getElementById('login-go-btn');
+    const loginCancelBtn = document.getElementById('login-cancel-btn');
+    const logoutOverlay = document.getElementById('logout-confirm-overlay');
+    const logoutConfirmBtn = document.getElementById('logout-confirm-btn');
+    const logoutCancelBtn = document.getElementById('logout-cancel-btn');
+
+    // Ensure only one overlay is visible at a time
+    const hideAllOverlays = () => {
+        loginOverlay?.classList.add('hidden');
+        logoutOverlay?.classList.add('hidden');
+    };
+
+    const ensureSignedIn = (next: () => void) => {
+        const u = auth.currentUser;
+        if (!u) { window.location.href = 'index.html'; return; }
+        if (u.isAnonymous) {
+            // Show login only, hide any others first
+            hideAllOverlays();
+            if (loginOverlay) loginOverlay.classList.remove('hidden');
+            if (loginGoBtn) loginGoBtn.onclick = () => { window.location.href = 'index.html'; };
+            if (loginCancelBtn) loginCancelBtn.onclick = () => { if (loginOverlay) loginOverlay.classList.add('hidden'); };
+            return;
         }
+        next();
+    };
+    const logoutHandler = async () => {
+        // Show logout confirm only, hide any others first
+        hideAllOverlays();
+        if (logoutOverlay) logoutOverlay.classList.remove('hidden');
+        if (logoutConfirmBtn) logoutConfirmBtn.onclick = async () => {
+            try { await auth.signOut(); } catch (e) { console.error(e); }
+        };
+        if (logoutCancelBtn) logoutCancelBtn.onclick = () => { if (logoutOverlay) logoutOverlay.classList.add('hidden'); };
     };
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) logoutBtn.addEventListener('click', logoutHandler);
@@ -81,29 +108,23 @@ function setupMenuActions() {
     }
 
     const customizeBtn = document.querySelector('[data-menu="customize"]');
-    if (customizeBtn) {
-        customizeBtn.addEventListener('click', openCustomizationModal);
-    }
+    if (customizeBtn) { customizeBtn.addEventListener('click', () => ensureSignedIn(openCustomizationModal)); }
 
     const upgradesBtn = document.querySelector('[data-menu="upgrades"]');
-    if (upgradesBtn) {
-        upgradesBtn.addEventListener('click', openUpgradesModal);
-    }
+    if (upgradesBtn) { upgradesBtn.addEventListener('click', () => ensureSignedIn(openUpgradesModal)); }
 
     const reefBtn = document.querySelector('[data-menu="reef"]');
-    if (reefBtn) {
-        reefBtn.addEventListener('click', openReefModal);
-    }
+    if (reefBtn) { reefBtn.addEventListener('click', () => ensureSignedIn(openReefModal)); }
 
     const leaderboardBtn = document.querySelector('[data-menu="leaderboard"]');
-    if (leaderboardBtn) {
-        leaderboardBtn.addEventListener('click', openLeaderboardModal);
-    }
+    if (leaderboardBtn) { leaderboardBtn.addEventListener('click', () => ensureSignedIn(openLeaderboardModal)); }
+
+    // Close overlays when clicking on the dim background
+    loginOverlay?.addEventListener('click', (e) => { if (e.target === loginOverlay) loginOverlay.classList.add('hidden'); });
+    logoutOverlay?.addEventListener('click', (e) => { if (e.target === logoutOverlay) logoutOverlay.classList.add('hidden'); });
 
     const redeemBtn = document.querySelector('[data-menu="redeem"]');
-    if (redeemBtn) {
-        redeemBtn.addEventListener('click', openRedeemModal);
-    }
+    if (redeemBtn) { redeemBtn.addEventListener('click', () => ensureSignedIn(openRedeemModal)); }
 
     // DEPART BUTTON LOGIC
     const departBtn = document.getElementById('depart-btn');

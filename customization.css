@@ -155,6 +155,8 @@
   overflow-y: auto;
   padding: 0.25rem 0.5rem 0.25rem 0; /* Space for scrollbar */
 }
+
+/* Remove full overlay to avoid blocking tabs; show chip-level locks instead */
 #customization-content::-webkit-scrollbar { width: 4px; }
 #customization-content::-webkit-scrollbar-track { background: transparent; }
 #customization-content::-webkit-scrollbar-thumb { background-color: var(--glow-color-soft); border-radius: 4px; }

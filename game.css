@@ -108,6 +108,60 @@ html, body, #root {
     z-index: 10;
 }
 
+/* === HUD (capacity, score, fullscreen) === */
+/* Add hard margins in case safe-area is zero */
+#game-hud {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 8px);
+  left: max(8px, env(safe-area-inset-left));
+  right: max(8px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  z-index: 40;
+  pointer-events: none;
+}
+.hud-element-wrapper.score { margin-left: auto; }
+/* Ensure score stays at far right regardless of earlier blocks */
+#game-hud > .hud-element-wrapper.score { margin-left: auto !important; }
+.hud-element { display: inline-flex; align-items: center; }
+.hud-fs-btn {
+  width: 40px; height: 40px; border-radius: 999px;
+  background: rgba(2,6,23,0.45); color: #e5f3ff; border: 1px solid var(--hud-border);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.hud-element.capacity-bar,
+.hud-element.game-score {
+  background: rgba(2, 6, 23, 0.42);
+  border: 1px solid var(--hud-border);
+  border-radius: 16px;
+  padding: 6px 10px;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.06);
+  pointer-events: auto;
+}
+.hud-element.game-score { white-space: nowrap; font-weight: 800; letter-spacing: .02em; }
+@media (max-width: 520px) {
+  #game-hud { flex-wrap: wrap; gap: 8px; }
+  .hud-fs-btn { width: 34px; height: 34px; order: 3; margin-left: auto; }
+  .hud-element.capacity-bar, .hud-element.game-score { padding: 4px 8px; border-radius: 14px; }
+}
+@media (max-width: 680px) {
+  #game-hud { flex-wrap: wrap; }
+}
+
+/* === Mobile on-screen controls === */
+.mobile-controls { position: fixed; inset: 0; pointer-events: none; z-index: 180; }
+.mc-row { position: absolute; left: 0; right: 0; bottom: calc(clamp(72px, 10vh, 110px) + env(safe-area-inset-bottom)); display: flex; gap: 14px; justify-content: center; }
+.mc-btn { pointer-events: auto; width: 64px; height: 64px; border-radius: 14px; border: 1px solid var(--hud-border); background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); color: #eaf6ff; font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
+.mc-btn:active { transform: translateY(1px); }
+.mc-btn.primary { width: 86px; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .mc-row { bottom: calc(64px + env(safe-area-inset-bottom)); }
+  .mc-btn { width: 54px; height: 54px; }
+  .mc-btn.primary { width: 72px; }
+}
+
 /* --- NEW: 3D Wave Styles --- */
 #game-waves {
     position: fixed;
@@ -225,13 +279,64 @@ html, body, #root {
     visibility: visible;
 }
 
+/* --- HUD Layout (avoid overlap) --- */
+#game-hud {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 8px);
+  left: 10px;
+  right: 10px;
+  display: grid;
+  grid-template-columns: max-content max-content max-content; /* fit content */
+  justify-content: space-between; /* spread nicely */
+  align-items: center;
+  gap: 12px;
+  z-index: 40;
+  pointer-events: none; /* let game capture drags; re-enable on children */
+}
+#game-hud .hud-element-wrapper, #game-hud .hud-fs-btn { pointer-events: auto; }
+
+.hud-element-wrapper { display: inline-flex; }
+.hud-fs-btn {
+  width: 40px; height: 40px; border-radius: 999px;
+  background: var(--hud-bg); color: #e5f3ff; border: 1px solid var(--hud-border);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+/* Themed translucent badges */
+.hud-element.capacity-bar,
+.hud-element.game-score {
+  background: rgba(2, 6, 23, 0.42);
+  border: 1px solid var(--hud-border);
+  border-radius: 16px;
+  padding: 6px 10px;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.06);
+}
+.hud-element.game-score span { font-weight: 800; letter-spacing: .02em; }
+@media (max-width: 520px) {
+  #game-hud { gap: 8px; left: 6px; right: 6px; top: calc(env(safe-area-inset-top) + 6px); }
+  .hud-fs-btn { width: 34px; height: 34px; }
+  .hud-element.capacity-bar, .hud-element.game-score { padding: 4px 8px; border-radius: 14px; }
+}
+
+/* Mobile on-screen controls (coarse pointer only) */
+.mobile-controls { position: fixed; inset: 0; pointer-events: none; z-index: 180; }
+.mc-row { position: absolute; left: 0; right: 0; bottom: calc(clamp(56px, 9vh, 88px) + env(safe-area-inset-bottom)); display: flex; gap: 14px; justify-content: center; }
+.mc-btn { pointer-events: auto; width: 64px; height: 64px; border-radius: 14px; border: 1px solid var(--hud-border); background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); color: #eaf6ff; font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 24px rgba(0,0,0,0.35); }
+.mc-btn:active { transform: translateY(1px); }
+.mc-btn.primary { width: 86px; }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .mc-row { bottom: calc(6px + env(safe-area-inset-bottom)); }
+  .mc-btn { width: 54px; height: 54px; }
+  .mc-btn.primary { width: 72px; }
+}
+
 .popup-dialog {
-    background: linear-gradient(to bottom, #aee1ff 0%, #6fc6ff calc(var(--water-level-vh) - 20px), #0a516f var(--water-level-vh), #083a50 100%);
+    background: linear-gradient(165deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
     border: 1px solid var(--glow-color-dark); border-radius: 24px; padding: 2rem;
-    width: 90%; max-width: 500px; text-align: center;
-    display: flex; flex-direction: column; gap: 1.5rem;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    transform: scale(0.9);
+    width: 90%; max-width: 520px; text-align: center;
+    display: flex; flex-direction: column; gap: 1.25rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.06);
+    transform: scale(0.96) translateY(8px);
     opacity: 0;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
     max-height: 88dvh;
@@ -243,18 +348,19 @@ html, body, #root {
     transform: scale(1);
     opacity: 1;
 }
-.popup-dialog h2 { font-size: 2.5rem; font-family: 'Lilita One', cursive; color: var(--success-color); }
+.popup-dialog h2 { font-size: 2.2rem; font-family: 'Rajdhani', 'Kanit', system-ui, sans-serif; color: var(--highlight-glow); letter-spacing: 0.02em; }
 .results-summary {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    background: rgba(0,0,0,0.2);
+    gap: 0.9rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--glow-color-dark);
     padding: 1rem;
-    border-radius: 12px;
+    border-radius: 14px;
 }
-.summary-item { font-size: 1.1rem; font-weight: 600; }
-.summary-item .label { display: block; font-size: 0.8rem; color: var(--text-color-dim); margin-bottom: 0.25rem; }
-.summary-item .value { font-size: 1.4rem; }
+.summary-item { font-size: 1.05rem; font-weight: 700; text-align: left; }
+.summary-item .label { display: block; font-size: 0.85rem; color: var(--text-color-dim); margin-bottom: 0.25rem; }
+.summary-item .value { font-size: 1.5rem; color: #e0f2fe; text-shadow: 0 0 8px rgba(0, 246, 255, 0.15); }
 .popup-buttons { display: flex; gap: 1rem; justify-content: center; }
 .popup-dialog button {
     padding: 0.8rem 1.5rem; border-radius: 12px;
@@ -286,6 +392,8 @@ html, body, #root {
     max-width: min(92vw, 720px);
 }
 /* animation removed for persistent hint */
+/* Hide tutorial hint globally to prevent pointing UI from showing */
+.tutorial-tooltip { display: none !important; }
 
 .sorting-overlay {
     position: fixed;
@@ -696,24 +804,30 @@ main.is-sorting .cursor-ring {
 
 /* --- NEW: Results Screen Styles --- */
 .popup-dialog h3 {
-    font-size: 1.5rem;
-    color: var(--highlight-glow);
+    font-size: 1.35rem;
+    color: #a5f3fc;
     margin-top: 1rem;
-    margin-bottom: -0.5rem;
-    font-family: 'Lilita One', cursive;
+    margin-bottom: -0.35rem;
+    font-family: 'Rajdhani','Kanit',system-ui,sans-serif;
     text-shadow: 2px 2px 3px rgba(0,0,0,0.5);
 }
 .results-gains {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    background: rgba(0,0,0,0.2);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--glow-color-dark);
     padding: 1rem;
-    border-radius: 12px;
+    border-radius: 14px;
 }
 .gains-item {
     font-size: 1.1rem;
     font-weight: 600;
+    background: rgba(1,4,16,0.35);
+    border: 1px solid var(--glow-color-dark);
+    border-radius: 12px;
+    padding: 0.6rem 0.35rem;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
 }
 .gains-label {
     display: block;
@@ -723,8 +837,14 @@ main.is-sorting .cursor-ring {
 }
 .gains-value {
     font-size: 1.4rem;
-    color: var(--success-color);
+    color: #34d399;
+    text-shadow: 0 0 6px rgba(52,211,153,0.35);
 }
+
+/* Accents */
+.results-gains .gains-item:nth-child(1) .gains-value { color: #22d3ee; text-shadow: 0 0 6px rgba(34,211,238,0.35); }
+.results-gains .gains-item:nth-child(2) .gains-value { color: #fbbf24; text-shadow: 0 0 6px rgba(251,191,36,0.35); }
+.results-gains .gains-item:nth-child(3) .gains-value { color: #86efac; text-shadow: 0 0 6px rgba(134,239,172,0.35); }
 /* --- NEW: 3D Wave Styles (Canvas) --- */
 .waves-canvas {
   position: fixed;
@@ -746,6 +866,65 @@ main.is-sorting .cursor-ring {
 @media (pointer: coarse) {
   .cursor-dot, .cursor-ring { display: none; }
   .collection-game-container { cursor: default; }
+  .tutorial-tooltip { display: none !important; }
+  .hud-fs-btn { display: none; }
+}
+
+/* Hide fullscreen button on small screens as well (fallback if pointer test fails) */
+@media (max-width: 900px) {
+  .hud-fs-btn { display: none !important; }
+}
+
+/* Landscape small-height: shrink HUD capsules so they don't cover view */
+@media (orientation: landscape) and (max-height: 520px) {
+  #game-hud { top: calc(env(safe-area-inset-top) + 4px); gap: 6px; }
+  .hud-element.capacity-bar, .hud-element.game-score { padding: 3px 6px; border-radius: 12px; }
+  .hud-element.game-score { font-size: .92rem; }
+}
+
+/* Mobile landscape: make HUD balanced and compact with equal-width capsules, score at far right */
+@media (pointer: coarse) and (orientation: landscape) {
+  #game-hud {
+    /* landscape mobile: let each chip size to its own content */
+    --hud-chip-w: auto; /* not used now; keep placeholder */
+    top: calc(env(safe-area-inset-top) + 6px);
+    left: max(6px, env(safe-area-inset-left));
+    right: max(6px, env(safe-area-inset-right));
+    display: flex;
+    justify-content: flex-start; /* left pack */
+    gap: 8px;
+  }
+  /* Size to content so capsules are not too long */
+  #game-hud .hud-element-wrapper {
+    flex: 0 0 auto;
+    max-width: none;
+    width: max-content; /* fit to content (text + bar) */
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+  /* Capacity chip: stack label and bar like portrait */
+  #game-hud .hud-element.capacity-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  #game-hud .hud-element.capacity-bar span { display: block; line-height: 1.1; }
+  /* Score on the far right */
+  #game-hud .hud-element-wrapper.score { margin-left: auto; }
+  .hud-element.game-score { justify-content: center; }
+  .capacity-bar-bg { width: clamp(60px, 10vw, 78px); height: .9rem; }
+  /* Desktop look but scaled down */
+  #game-hud .hud-element {
+    font-size: clamp(.95rem, 2.2vw, 1.05rem);
+  }
+}
+
+/* Very short landscape devices: shrink further so HUD never blocks view */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 480px) {
+  #game-hud { top: calc(env(safe-area-inset-top) + 4px); gap: 6px; }
+  #game-hud .hud-element-wrapper { width: max-content; padding: 3px 6px; border-radius: 10px; }
+  #game-hud .hud-element { font-size: clamp(.86rem, 2vw, .95rem); }
+  .capacity-bar-bg { width: 72px; height: .8rem; }
 }
 .hook-emoji { text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
 
@@ -763,17 +942,29 @@ main.is-sorting .cursor-ring {
   }
   .results-summary { gap: 0.75rem; }
   .results-gains { gap: 0.75rem; padding: 0.75rem; }
-  .popup-dialog h2 { font-size: 2rem; }
-  .popup-dialog h3 { font-size: 1.25rem; }
+  .popup-dialog h2 { font-size: 1.9rem; }
+  .popup-dialog h3 { font-size: 1.2rem; }
 }
 
 @media (orientation: landscape) and (max-height: 420px) {
-  .popup-dialog { width: 94vw; max-width: none; padding: 0.75rem; gap: 0.75rem; }
+  .popup-dialog { width: 94vw; max-width: none; padding: 0.9rem; gap: 0.75rem; }
   .results-summary { grid-template-columns: 1fr 1fr; }
   .results-gains { grid-template-columns: 1fr 1fr 1fr; }
   .popup-buttons { flex-wrap: wrap; }
 }
 
+/* Small screens: stack action buttons */
+@media (max-width: 520px) {
+  .popup-buttons { flex-wrap: wrap; }
+  .popup-buttons .btn-primary,
+  .popup-buttons .btn-secondary { flex: 1 1 160px; min-height: 44px; }
+}
+
 /* Removed large mobile button; controls are full-screen touch gestures */
 
+/* Desktop override: keep score to far right */
+@media (pointer: fine) {
+  #game-hud { display: flex !important; justify-content: flex-start !important; }
+  #game-hud .hud-element-wrapper.score { margin-left: auto !important; }
+}
 @media (orientation: landscape) and (max-height: 560px) { #game-hud { padding: 0.4rem 0.8rem; } .hud-element-wrapper { padding: 0.25rem 0.6rem; border-radius: 36px; } .tutorial-tooltip { bottom: 8px; font-size: 0.9rem; } }

@@ -67,6 +67,26 @@
   margin-bottom: 1rem;
 }
 
+/* Meta row: countdown + rewards note */
+#leaderboard-meta {
+  margin: 0.25rem auto 0.75rem auto;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+}
+#lb-countdown {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glow-color-dark);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+}
+#lb-reward {
+  color: var(--highlight-glow);
+}
+
 #leaderboard-tabs {
   display: flex;
   background-color: rgba(0,0,0,0.3);
