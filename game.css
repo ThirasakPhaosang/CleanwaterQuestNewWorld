@@ -293,7 +293,11 @@ html, body, #root {
   z-index: 40;
   pointer-events: none; /* let game capture drags; re-enable on children */
 }
-#game-hud .hud-element-wrapper, #game-hud .hud-fs-btn { pointer-events: auto; }
+#game-hud .hud-element-wrapper.score { justify-self: end; }
+#game-hud .hud-element-wrapper, #game-hud .hud-fs-btn, #game-hud .hud-sort-btn { pointer-events: auto; }
+/* Center holder for the sort button */
+.hud-center { flex: 0 0 auto; margin-left: auto; display: flex; justify-content: flex-end; align-items: center; pointer-events: none; }
+.hud-center .hud-sort-btn { pointer-events: auto; }
 
 .hud-element-wrapper { display: inline-flex; }
 .hud-fs-btn {
@@ -301,6 +305,21 @@ html, body, #root {
   background: var(--hud-bg); color: #e5f3ff; border: 1px solid var(--hud-border);
   display: inline-flex; align-items: center; justify-content: center;
 }
+/* (audio gear removed; audio settings live in Settings modal) */
+/* New: quick access sort button (manual sorting) */
+.hud-sort-wrap { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+.hud-sort-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 0; /* wrapper provides padding */
+  border: 0; background: transparent; color: #86efac;
+  font-weight: 800; letter-spacing: .01em;
+}
+#game-hud .hud-sort-btn { margin-left: auto; margin-right: 0; }
+.hud-sort-btn .icon { font-size: 1rem; line-height: 1; }
+.hud-sort-btn .label { white-space: nowrap; }
+.hud-sort-btn:disabled { opacity: .45; filter: grayscale(0.3); cursor: not-allowed; }
+
+/* (audio popover removed; moved to settings.css) */
 /* Themed translucent badges */
 .hud-element.capacity-bar,
 .hud-element.game-score {
@@ -314,7 +333,34 @@ html, body, #root {
 @media (max-width: 520px) {
   #game-hud { gap: 8px; left: 6px; right: 6px; top: calc(env(safe-area-inset-top) + 6px); }
   .hud-fs-btn { width: 34px; height: 34px; }
+  .hud-sort-btn { padding: 4px 10px; min-height: 34px; font-size: 0.95rem; }
+  
   .hud-element.capacity-bar, .hud-element.game-score { padding: 4px 8px; border-radius: 14px; }
+}
+
+/* Portrait phones: keep capacity left, score right on row 1, center button on row 2 */
+@media (max-width: 520px) and (orientation: portrait) {
+  #game-hud { flex-wrap: wrap; align-items: flex-start; }
+  #game-hud .hud-element-wrapper.score { order: 2; margin-left: auto !important; }
+.hud-center { order: 3; flex: 1 1 100%; justify-content: flex-end; margin-top: 4px; }
+  /* Make capacity bar length adaptive but not too long */
+  .capacity-bar-bg { width: clamp(72px, 46vw, 128px); height: .9rem; }
+}
+
+/* Universal override: keep score at far right on every device */
+#game-hud { display: flex !important; justify-content: flex-start !important; align-items: center !important; flex-wrap: nowrap !important; }
+#game-hud .hud-element-wrapper.score { margin-left: auto !important; }
+.hud-center { order: 0 !important; flex: 0 0 auto !important; }
+/* Floating score numbers when collecting */
+.floating-score {
+  position: fixed;
+  z-index: 160;
+  color: #eaffff;
+  font-weight: 900;
+  font-family: 'Kanit','Noto Sans Thai','Noto Sans',system-ui,sans-serif;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.35), 0 0 8px rgba(34,211,238,0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 /* Mobile on-screen controls (coarse pointer only) */
@@ -912,7 +958,8 @@ main.is-sorting .cursor-ring {
   /* Score on the far right */
   #game-hud .hud-element-wrapper.score { margin-left: auto; }
   .hud-element.game-score { justify-content: center; }
-  .capacity-bar-bg { width: clamp(60px, 10vw, 78px); height: .9rem; }
+  /* Make capacity bar longer on mobile landscape to avoid cramped look */
+  .capacity-bar-bg { width: clamp(110px, 22vw, 180px); height: 1.1rem; }
   /* Desktop look but scaled down */
   #game-hud .hud-element {
     font-size: clamp(.95rem, 2.2vw, 1.05rem);
@@ -924,7 +971,8 @@ main.is-sorting .cursor-ring {
   #game-hud { top: calc(env(safe-area-inset-top) + 4px); gap: 6px; }
   #game-hud .hud-element-wrapper { width: max-content; padding: 3px 6px; border-radius: 10px; }
   #game-hud .hud-element { font-size: clamp(.86rem, 2vw, .95rem); }
-  .capacity-bar-bg { width: 72px; height: .8rem; }
+  /* Even on very short screens, keep bar reasonably wide */
+  .capacity-bar-bg { width: 100px; height: 1rem; }
 }
 .hook-emoji { text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
 
@@ -964,7 +1012,7 @@ main.is-sorting .cursor-ring {
 
 /* Desktop override: keep score to far right */
 @media (pointer: fine) {
-  #game-hud { display: flex !important; justify-content: flex-start !important; }
+  #game-hud { display: flex !important; justify-content: flex-start !important; align-items: center !important; flex-wrap: nowrap !important; }
   #game-hud .hud-element-wrapper.score { margin-left: auto !important; }
 }
 @media (orientation: landscape) and (max-height: 560px) { #game-hud { padding: 0.4rem 0.8rem; } .hud-element-wrapper { padding: 0.25rem 0.6rem; border-radius: 36px; } .tutorial-tooltip { bottom: 8px; font-size: 0.9rem; } }

@@ -876,3 +876,4 @@ body {
   .orbital-button { transform: scale(0.9); }
   #bottom-dock { transform: translateX(-50%) scale(0.95); }
 }
+/* (audio popover removed — now inside Settings modal only) */

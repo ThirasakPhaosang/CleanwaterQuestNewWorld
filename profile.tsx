@@ -1,6 +1,7 @@
 // FIX: Switched to Firebase v8 compatibility imports.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
+import audio from './audio';
 import { PlayerProfile, getPlayerProfile, savePlayerProfile, TITLES_DATA, getXpForLevel } from './profile-data';
 
 // This file now only contains the logic for the PROFILE MODAL on the MENU screen.
@@ -187,10 +188,12 @@ export function openProfileModal() {
     renderProfile(profile, user.isAnonymous);
 
     profileOverlay.classList.remove('hidden');
+    try { audio.uiOpen(); } catch {}
 }
 
 function closeProfileModal() {
     profileOverlay?.classList.add('hidden');
+    try { audio.uiClose(); } catch {}
 }
 
 function handleEquipTitle(e: Event) {

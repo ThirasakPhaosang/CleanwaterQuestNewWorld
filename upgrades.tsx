@@ -2,6 +2,7 @@
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { PlayerProfile, getPlayerProfile, savePlayerProfile } from './profile-data';
+import audio from './audio';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAAXqmfSy_q_Suh4td5PeLz-ZsuICf-KwI",
@@ -140,6 +141,7 @@ async function handleUpgrade(key: UpgradeKey) {
     currentProfile.xp += 50 * currentProfile.upgrades[key].level; // Add XP bonus
 
     savePlayerProfile(currentProfile);
+    try { audio.sfx.correct(); } catch {}
 
     // UI Feedback
     const card = document.getElementById(`upgrade-card-${key}`);
@@ -172,10 +174,12 @@ export function openUpgradesModal() {
     renderUI();
     updateEcoTip();
     overlay.classList.remove('hidden');
+    try { audio.uiOpen(); } catch {}
 }
 
 function closeModal() {
     overlay?.classList.add('hidden');
+    try { audio.uiClose(); } catch {}
 }
 
 // --- INITIALIZATION ---
@@ -195,6 +199,7 @@ function initUpgrades() {
         if (target.matches('.upgrade-button')) {
             const key = target.dataset.key as UpgradeKey;
             if (key) {
+                try { audio.uiClick(); } catch {}
                 handleUpgrade(key);
             }
         }

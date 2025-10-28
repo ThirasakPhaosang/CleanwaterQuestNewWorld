@@ -2,6 +2,7 @@
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
+import audio from './audio';
 
 // Safe Thai text using percent-decoding to avoid mojibake in some toolchains
 const ud = (s: string) => decodeURIComponent(s);
@@ -204,4 +205,5 @@ export function openLeaderboardModal() {
   if (!currentPlayer || !overlay) return;
   overlay.classList.remove('hidden');
   subscribeLeaderboard();
+  try { audio.uiOpen(); } catch {}
 }

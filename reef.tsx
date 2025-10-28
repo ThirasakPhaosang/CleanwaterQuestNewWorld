@@ -183,10 +183,12 @@ export function openReefModal() {
     renderReefUI();
     updateEcoFact();
     overlay.classList.remove('hidden');
+    try { audio.uiOpen(); } catch {}
 }
 
 function closeModal() {
     overlay?.classList.add('hidden');
+    try { audio.uiClose(); } catch {}
 }
 
 // --- INITIALIZATION ---
@@ -204,6 +206,7 @@ function initReefSystem() {
     donationButtonsContainer.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
         if (target.matches('.donate-btn')) {
+            try { audio.uiClick(); } catch {}
             if (!currentPlayer) return;
             const profile = getPlayerProfile(currentPlayer);
             const amountStr = target.dataset.amount;

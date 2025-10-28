@@ -50,6 +50,7 @@ const REWARD_STOCK_KEY = 'cleanwater_quest_reward_stock';
 const REDEEM_HISTORY_KEY_PREFIX = 'cleanwater_quest_redeem_history_';
 
 // --- DOM ELEMENTS ---
+import audio from './audio';
 const overlay = document.getElementById('redeem-overlay');
 const closeBtn = document.getElementById('redeem-close-btn');
 const tabsContainer = document.getElementById('redeem-tabs');
@@ -324,10 +325,12 @@ export function openRedeemModal() {
     loadStock();
     renderUI();
     overlay.classList.remove('hidden');
+    try { audio.uiOpen(); } catch {}
 }
 
 function closeModal() {
     overlay?.classList.add('hidden');
+    try { audio.uiClose(); } catch {}
 }
 
 function switchTab(e: Event) {
@@ -357,7 +360,7 @@ function initRedeem() {
     });
 
     tabsContainer.querySelectorAll('.redeem-tab').forEach(tab => {
-        tab.addEventListener('click', switchTab);
+        tab.addEventListener('click', (e)=>{ switchTab(e); try { audio.uiClick(); } catch {} });
     });
     contentEl.addEventListener('click', handleRedeemClick);
 }

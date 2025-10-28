@@ -1,6 +1,7 @@
-﻿import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, FC, DragEvent, TouchEvent as ReactTouchEvent } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, FC, DragEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { gsap } from 'gsap';
+import audio from './audio';
 // FIX: Switched to Firebase v8 compatibility imports.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
@@ -74,8 +75,8 @@ const TRASH_DATA: Record<TrashId, TrashData> = {
   bag: { name: ud('item_bag=%E0%B8%96%E0%B8%B8%E0%B8%87%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81'.split('=')[1]), icon: cp(0x1F6CD), type: 'general', points: 7, weight: 1.2, ecoFact: ud('fact_bag=%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%96%E0%B8%B8%E0%B8%87%E0%B8%9C%E0%B9%89%E0%B8%B2%E0%B9%81%E0%B8%97%E0%B8%99%E0%B9%80%E0%B8%9E%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%A5%E0%B8%94%E0%B8%82%E0%B8%A2%E0%B8%B0%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%E0%B9%83%E0%B8%99%E0%B8%97%E0%B8%B0%E0%B9%80%E0%B8%A5'.split('=')[1]) },
   boot: { name: ud('item_boot=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B8%9A%E0%B8%B9%E0%B8%97'.split('=')[1]), icon: cp(0x1F97E), type: 'general', points: 3, weight: 2.2, ecoFact: ud('fact_boot=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B8%9A%E0%B8%B9%E0%B8%97%E0%B8%A1%E0%B8%B1%E0%B8%81%E0%B8%97%E0%B8%B3%E0%B8%88%E0%B8%B2%E0%B8%81%E0%B8%A2%E0%B8%B2%E0%B8%87%2F%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%20%E0%B8%A2%E0%B9%88%E0%B8%AD%E0%B8%A2%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B8%A2%E0%B8%B2%E0%B8%81'.split('=')[1]) },
   champagne: { name: ud('item_champagne=%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7'.split('=')[1]), icon: cp(0x1F37E), type: 'recyclable', points: 12, weight: 1.8, ecoFact: ud('fact_glass=%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B9%84%E0%B8%94%E0%B9%89%20100%25%20%E0%B9%82%E0%B8%94%E0%B8%A2%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%AA%E0%B8%B9%E0%B8%8D%E0%B9%80%E0%B8%AA%E0%B8%B5%E0%B8%A2%E0%B8%84%E0%B8%B8%E0%B8%93%E0%B8%A0%E0%B8%B2%E0%B8%9E'.split('=')[1]) },
-  treasure: { name: 'หีบสมบัติ', icon: '💎', type: 'recyclable', points: 500, weight: 3.0, ecoFact: 'ขุมทรัพย์แห่งท้องทะเล!' },
-  sunken_treasure: { name: 'หีบสมบัติโบราณ', icon: '📦', type: 'recyclable', points: 1000, weight: 5.0, ecoFact: 'สมบัติล้ำค่าที่หลับใหลใต้ท้องทะเล!' },
+  treasure: { name: ud('item_treasure=%E0%B8%AB%E0%B8%B5%E0%B8%9A%E0%B8%AA%E0%B8%A1%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4'.split('=')[1]), icon: cp(0x1F4B0), type: 'recyclable', points: 500, weight: 3.0, ecoFact: ud('fact_treasure=%E0%B8%9E%E0%B8%9A%E0%B8%AA%E0%B8%A1%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B9%83%E0%B8%95%E0%B9%89%E0%B8%97%E0%B8%B0%E0%B9%80%E0%B8%A5%20%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%80%E0%B8%99%E0%B9%89%E0%B8%99%E0%B8%99%E0%B8%B3%E0%B9%84%E0%B8%9B%E0%B8%AA%E0%B9%88%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5'.split('=')[1]) },
+  sunken_treasure: { name: ud('item_sunken=%E0%B8%AA%E0%B8%A1%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B9%83%E0%B8%95%E0%B9%89%E0%B8%97%E0%B8%B0%E0%B9%80%E0%B8%A5'.split('=')[1]), icon: cp(0x1F48E), type: 'recyclable', points: 1000, weight: 5.0, ecoFact: ud('fact_sunken=%E0%B8%AA%E0%B8%A1%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B9%83%E0%B8%95%E0%B9%89%E0%B8%97%E0%B8%B0%E0%B9%80%E0%B8%A5%E0%B8%9A%E0%B8%AD%E0%B8%81%E0%B9%80%E0%B8%A3%E0%B8%B2%E0%B9%80%E0%B8%96%E0%B8%B4%E0%B8%99%E0%B8%81%E0%B8%B1%E0%B8%9A%E0%B8%9E%E0%B8%A7%E0%B8%81%E0%B9%80%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%B2'.split('=')[1]) },
 };
 const DAY_CYCLE_DURATION_S = 240;
 
@@ -90,6 +91,7 @@ const Game: FC = () => {
     const [profile, setProfile] = useState<PlayerProfile | null>(null);
     const [collectedForSorting, setCollectedForSorting] = useState<CollectedTrash[]>([]);
     const [gameStats, setGameStats] = useState({ score: 0, collected: 0, sortedCorrectly: 0, incorrect: 0 });
+    const [liveScore, setLiveScore] = useState(0);
     const [gameGains, setGameGains] = useState({ xp: 0, coins: 0, coralFragments: 0 });
     const [showResults, setShowResults] = useState(false);
 
@@ -105,6 +107,14 @@ const Game: FC = () => {
             }
         });
         return () => unsubscribe();
+    }, []);
+
+    // Audio: start background music for game after first gesture
+    useEffect(() => {
+        const startAudio = async () => { try { await audio.init(); audio.setVolume('music', 0.5); await audio.startMusic('game'); } catch {} };
+        const handler = () => { startAudio(); window.removeEventListener('pointerdown', handler as any); };
+        window.addEventListener('pointerdown', handler as any, { once: true } as any);
+        return () => { window.removeEventListener('pointerdown', handler as any); };
     }, []);
 
     const handleCollectionComplete = useCallback((collected: CollectedTrash[]) => {
@@ -162,6 +172,7 @@ const Game: FC = () => {
         } catch {}
         setProfile(newProfile);
         setPhase('results');
+        audio.sfx.result();
         setTimeout(() => setShowResults(true), 100);
     };
     
@@ -177,6 +188,7 @@ const Game: FC = () => {
                 profile={profile} 
                 onCollectionComplete={handleCollectionComplete} 
                 isPaused={phase !== 'collection'} 
+                onScore={(pts)=> setLiveScore(prev=>prev + pts)} 
             />
             {phase === 'sorting' && (
                 <div className="sorting-overlay">
@@ -270,11 +282,14 @@ const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number,
         let finalSortedCorrectly = sortedCorrectly;
         
         if (binType === correctType) {
+            try { audio.sfx.correct(); } catch {}
+            // softer feedback: keep visual only (no beep)
             newScore += (itemData?.points || 5) * 1.5; // 50% bonus
             finalSortedCorrectly = sortedCorrectly + 1;
             setSortedCorrectly(finalSortedCorrectly);
             setFeedback({ type: 'correct', message: ud('correct=%E0%B8%96%E0%B8%B9%E0%B8%81%E0%B8%95%E0%B9%89%E0%B8%AD%E0%B8%87!'.split('=')[1]), id: Date.now() });
         } else {
+            // no harsh sound on wrong either
             newScore -= (itemData?.points || 5) * 0.25; // 25% penalty
             const correctBinName = bins.find(b => b.type === correctType)?.name || ud('right_bin=%E0%B8%96%E0%B8%B1%E0%B8%87%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%96%E0%B8%B9%E0%B8%81%E0%B8%95%E0%B9%89%E0%B8%AD%E0%B8%87'.split('=')[1]);
             setFeedback({ type: 'incorrect', message: ud('should_put=%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%83%E0%B8%AA%E0%B9%88%E0%B8%A5%E0%B8%87%E0%B9%83%E0%B8%99%20%22__BIN__%22'.split('=')[1]).replace('__BIN__', correctBinName), id: Date.now() });
@@ -307,6 +322,7 @@ const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number,
     };
     const handleDrop = (e: DragEvent<HTMLDivElement>, binType: TrashType) => {
         e.preventDefault();
+        try { audio.sfx.binDrop(); } catch {}
         if (draggedItem) {
             handleSort(draggedItem, binType);
         }
@@ -344,8 +360,8 @@ const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number,
         
         const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
         const binElement = elementUnder?.closest('.sorting-bin') as HTMLDivElement | null;
-        
-        setActiveBin(binElement?.dataset.binType as TrashType | null);
+        const nextBin = binElement?.dataset.binType as TrashType | null;
+        setActiveBin(nextBin);
     };
     
     const handleTouchEnd = () => {
@@ -379,10 +395,10 @@ const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number,
     }
 
     const bins: { type: TrashType; name: string; icon: string; desc: string; colorClass: string }[] = [
-        { type: 'organic', name: 'ขยะเปียก', icon: '🌿', desc: 'เศษอาหาร ใบไม้', colorClass: 'bin-green' },
-        { type: 'recyclable', name: 'ขยะรีไซเคิล', icon: '♻️', desc: 'พลาสติก แก้ว กระดาษ', colorClass: 'bin-yellow' },
-        { type: 'general', name: 'ขยะทั่วไป', icon: '🗑️', desc: 'โฟม ของแตกหัก', colorClass: 'bin-blue' },
-        { type: 'hazardous', name: 'ขยะอันตราย', icon: '☣️', desc: 'แบตเตอรี่ สเปรย์', colorClass: 'bin-red' },
+        { type: 'organic',    name: ud('%E0%B8%82%E0%B8%A2%E0%B8%B0%E0%B9%80%E0%B8%9B%E0%B8%B5%E0%B8%A2%E0%B8%81'),        icon: cp(0x1F33F), desc: ud('%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3%20%E0%B9%83%E0%B8%9A%E0%B9%84%E0%B8%A1%E0%B9%89'), colorClass: 'bin-green' },
+        { type: 'recyclable', name: ud('%E0%B8%82%E0%B8%A2%E0%B8%B0%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5'), icon: cp(0x267B), desc: ud('%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%20%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7%20%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%94%E0%B8%B2%E0%B8%A9'), colorClass: 'bin-yellow' },
+        { type: 'general',    name: ud('%E0%B8%82%E0%B8%A2%E0%B8%B0%E0%B8%97%E0%B8%B1%E0%B9%88%E0%B8%A7%E0%B9%84%E0%B8%9B'),          icon: cp(0x1F5D1), desc: ud('%E0%B9%82%E0%B8%9F%E0%B8%A1%20%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B9%81%E0%B8%95%E0%B8%81%E0%B8%AB%E0%B8%B1%E0%B8%81'), colorClass: 'bin-blue' },
+        { type: 'hazardous',  name: ud('%E0%B8%82%E0%B8%A2%E0%B8%B0%E0%B8%AD%E0%B8%B1%E0%B8%99%E0%B8%95%E0%B8%A3%E0%B8%B2%E0%B8%A2'),     icon: cp(0x2623), desc: ud('%E0%B9%81%E0%B8%9A%E0%B8%95%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B8%B5%E0%B9%88%20%E0%B8%AA%E0%B9%80%E0%B8%9B%E0%B8%A3%E0%B8%A2%E0%B9%8C'), colorClass: 'bin-red' },
     ];
     const totalItems = collected.length;
     const sortedCount = totalItems - items.length;
@@ -452,7 +468,7 @@ const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number,
 };
 
 // --- Collection Phase ---
-const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: CollectedTrash[]) => void, isPaused: boolean }> = ({ profile, onCollectionComplete, isPaused }) => {
+const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: CollectedTrash[]) => void, isPaused: boolean, onScore?: (points:number)=>void }> = ({ profile, onCollectionComplete, isPaused, onScore }) => {
     const gameContainerRef = useRef<HTMLDivElement>(null);
     const gameWorldRef = useRef<HTMLDivElement>(null);
     const lineRef = useRef<SVGPathElement>(null);
@@ -520,6 +536,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
     const [collected, setCollected] = useState<CollectedTrash[]>([]);
     // Fullscreen state
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+    const [liveScore, setLiveScore] = useState(0);
     const collectedRef = useRef(collected);
     useEffect(() => { collectedRef.current = collected; }, [collected]);
     const maxCapacity = useMemo(() => getCapacityForLevel(profile.upgrades.capacity.level), [profile.upgrades.capacity.level]);
@@ -555,7 +572,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
         };
     }, [getIsFullscreen]);
 
-    // Mobile: ใช้พื้นที่เล่นทั้งจอ แทนปุ่ม
+    // Mobile: ???????????????????? ???????
     
     useEffect(() => {
         if (collected.length >= maxCapacity) {
@@ -696,10 +713,14 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             gameContainerRef.current?.classList.add('is-hook-active');
             const waterLine = window.innerHeight * (WATER_LEVEL_VH / 100);
             ripplesRef.current.push({ x: clientX, y: waterLine-2, r: 4, life: 1 });
+            audio.sfx.hookDrop();
         };
 
         const handleInteractionStart = (e: MouseEvent | TouchEvent) => {
             if (isPaused || collectedRef.current.length >= maxCapacity) return;
+            // Ignore taps on HUD (e.g., ?????? button) so clicks work on mobile
+            const tgt = e.target as HTMLElement;
+            if (tgt && tgt.closest && tgt.closest('#game-hud')) return;
             e.preventDefault();
             setIsTouching(true);
             if ('touches' in e) {
@@ -715,7 +736,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             }
         };
         const handleInteractionEnd = () => { 
-            if (hookState.current.status === 'lowering') hookState.current.status = 'raising'; 
+            if (hookState.current.status === 'lowering') { hookState.current.status = 'raising'; audio.sfx.hookRaise(); }
             setIsTouching(false);
             if (dropTimer) { clearTimeout(dropTimer); dropTimer = null; }
             gameContainerRef.current?.classList.remove('is-hook-active');
@@ -724,7 +745,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             if (isPaused) return;
             // Ignore drags originating from on-screen mobile controls to avoid jumps
             const tgt = e.target as HTMLElement;
-            if (tgt && tgt.closest && tgt.closest('.mobile-controls')) return;
+            if (tgt && tgt.closest && (tgt.closest('.mobile-controls') || tgt.closest('#game-hud'))) return;
             const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
             const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
             // If user moved finger before long-press fired, cancel dropping
@@ -1243,10 +1264,11 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                 const sx = octo.x - worldScrollX*0.6;
                 ctx.save();
                 ctx.translate(sx, octo.y);
-                ctx.font = '48px sans-serif';
+                ctx.font = '40px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('🐙', 0, 0);
+                // Draw octopus emoji instead of placeholder
+                try { ctx.fillText(cp(0x1F419), 0, 0); } catch { ctx.fillText('🐙', 0, 0); }
                 if (octo.state === 'grabbing') {
                     octo.phase += 0.1;
                     ctx.strokeStyle = '#333';
@@ -1642,6 +1664,19 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                         if (currentCollected.length < maxCapacity) {
                             const trashData = TRASH_DATA[caughtItem.id as TrashId];
                             if(trashData){
+                                // Live score & floating number at deposit
+                                if (onScore) { try { onScore(trashData.points || 0); } catch {} }
+                                try {
+                                    const fx = (caughtItem.x + (gsap.getProperty(gameWorldRef.current!, 'x') as number));
+                                    const fy = caughtItem.y;
+                                    const el = document.createElement('div');
+                                    el.className = 'floating-score';
+                                    el.textContent = `+${trashData.points}`;
+                                    document.body.appendChild(el);
+                                    el.style.left = `${fx}px`;
+                                    el.style.top = `${fy}px`;
+                                    gsap.fromTo(el, { y: 0, opacity: 1, scale: 1 }, { y: -36, opacity: 0, scale: 1.1, duration: 0.9, ease: 'power1.out', onComplete: () => el.remove() });
+                                } catch {}
                                 setCollected(prev => [...prev, {
                                     id: caughtItem.id as TrashId,
                                     uid: caughtItem.uid,
@@ -1744,6 +1779,8 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                             hookState.current.status = 'raising';
                             hookState.current.weight = TRASH_DATA[trash.id as TrashId].weight;
                             vibrate(100);
+                            audio.sfx.collect();
+                            if (trash.id === 'treasure' || (trash.id as any) === 'sunken_treasure') { try { audio.sfx.treasure(); } catch {} }
                             break;
                         }
                     }
@@ -1796,7 +1833,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
         boatPos.current.targetX = clampX(boatPos.current.targetX + st.vx);
         st.raf = requestAnimationFrame(mobileStep);
     };
-    const startMove = (dir: -1 | 1) => { const st = mobileMove.current; st.dir = dir; if (!st.raf) st.raf = requestAnimationFrame(mobileStep); };
+    const startMove = (dir: -1 | 1) => { const st = mobileMove.current; st.dir = dir; if (!st.raf) st.raf = requestAnimationFrame(mobileStep); audio.uiClick(); };
     const stopMove = (dir: -1 | 1) => { if (mobileMove.current.dir === dir) mobileMove.current.dir = 0; };
 const tapDrop = () => {
         if (isPaused) return;
@@ -1832,17 +1869,22 @@ const tapDrop = () => {
             </div>
             <svg className="line-svg"><path ref={lineRef} stroke="#2b2b2b" strokeWidth="2.5" fill="none" strokeLinecap="round" /></svg>
             <BoatSVG ref={boatRef} customization={profile.customization} />
-            <HUD collected={collected.length} maxCapacity={maxCapacity} score={0} onToggleFullscreen={toggleFullscreen} isFullscreen={isFullscreen} />
+            <HUD 
+              collected={collected.length} 
+              maxCapacity={maxCapacity} 
+              onSortNow={() => { if (collectedRef.current.length > 0) onCollectionComplete(collectedRef.current); }} 
+              canSortNow={collected.length > 0}
+            />
             {isMobile && (
               <div className="mobile-controls" aria-hidden="false">
                 <div className="mc-row">
-                  <button className="mc-btn" onTouchStart={() => startMove(-1)} onTouchEnd={() => stopMove(-1)} onMouseDown={() => startMove(-1)} onMouseUp={() => stopMove(-1)} aria-label="Left">◀</button>
+                  <button className="mc-btn" onTouchStart={() => startMove(-1)} onTouchEnd={() => stopMove(-1)} onMouseDown={() => startMove(-1)} onMouseUp={() => stopMove(-1)} aria-label="Left">{cp(0x25C0)}</button>
                   <button className="mc-btn primary" onClick={tapDrop} onTouchStart={(e)=>{ e.preventDefault(); tapDrop(); }} onMouseDown={(e)=>{ e.preventDefault(); tapDrop(); }} aria-label="Drop Hook">{cp(0x1FA9D)}</button>
-                  <button className="mc-btn" onTouchStart={() => startMove(1)} onTouchEnd={() => stopMove(1)} onMouseDown={() => startMove(1)} onMouseUp={() => stopMove(1)} aria-label="Right">▶</button>
+                  <button className="mc-btn" onTouchStart={() => startMove(1)} onTouchEnd={() => stopMove(1)} onMouseDown={() => startMove(1)} onMouseUp={() => stopMove(1)} aria-label="Right">{cp(0x25B6)}</button>
                 </div>
               </div>
             )}
-            {/* คำใบ้เล็กๆ สำหรับมือถือ จะโชว์ชั่วคราว ไม่รบกวนการเล่น */}
+            {/* ?????????? ???????????? ?????????????? ??????????????? */}
             {showHint && (
                 <div className="tutorial-tooltip">
                     {ud('mobile_hint=%E0%B9%81%E0%B8%95%E0%B8%B0%E0%B8%84%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%83%E0%B8%94%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B8%88%E0%B8%AD%E0%B8%AA%E0%B8%B1%E0%B8%A1%E0%B8%9C%E0%B8%B1%E0%B8%AA%20%E0%B8%A5%E0%B8%B2%E0%B8%81%E0%B9%80%E0%B8%9E%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B9%80%E0%B8%A5%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%99%E0%B9%80%E0%B8%A3%E0%B8%B7%E0%B8%AD'.split('=')[1])}
@@ -1865,12 +1907,31 @@ const BoatSVG = React.forwardRef<SVGSVGElement, { customization: PlayerProfile['
     </svg>
 ));
 
-const HUD: FC<{ collected: number, maxCapacity: number, score: number }> = ({ collected, maxCapacity, score }) => (
-    <div id="game-hud">
-        <div className="hud-element-wrapper"><div className="hud-element capacity-bar"><span>{ud('hud_collected=%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%9A%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7%3A'.split('=')[1])} {collected}/{maxCapacity}</span><div className="capacity-bar-bg"><div className="capacity-bar-fill" style={{ width: `${(collected / maxCapacity) * 100}%` }}></div></div></div></div>
-        <div className="hud-element-wrapper score"><div className="hud-element game-score"><span>{ud('score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%3A'.split('=')[1])} {score}</span></div></div>
-        {/* fullscreen button intentionally removed */}
+const HUD: FC<{ collected: number, maxCapacity: number, onSortNow?: () => void, canSortNow?: boolean }> = ({ collected, maxCapacity, onSortNow, canSortNow }) => (
+  <div id="game-hud">
+    <div className="hud-element-wrapper">
+      <div className="hud-element capacity-bar">
+        <span>{ud('hud_collected=%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%9A%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7%3A'.split('=')[1])} {collected}/{maxCapacity}</span>
+        <div className="capacity-bar-bg"><div className="capacity-bar-fill" style={{ width: `${(collected / maxCapacity) * 100}%` }}></div></div>
+      </div>
     </div>
+    <div className="hud-center">
+      <div className="hud-element-wrapper hud-sort-wrap">
+      <button
+        className="hud-sort-btn hud-element"
+        title={ud('sort_trash=%E0%B9%81%E0%B8%A2%E0%B8%81%E0%B8%82%E0%B8%A2%E0%B8%B0'.split('=')[1])}
+        onClick={onSortNow}
+        disabled={!canSortNow}
+        aria-label={ud('sort_trash=%E0%B9%81%E0%B8%A2%E0%B8%81%E0%B8%82%E0%B8%A2%E0%B8%B0'.split('=')[1])}
+        onTouchStart={(e)=>{ e.preventDefault(); e.stopPropagation(); audio.uiClick(); if (canSortNow && onSortNow) onSortNow(); }}
+        onMouseDown={(e)=>{ e.preventDefault(); e.stopPropagation(); audio.uiClick(); if (canSortNow && onSortNow) onSortNow(); }}
+      >
+        <span className="icon">{cp(0x267B)}</span>
+        <span className="label">{ud('sort_trash=%E0%B9%81%E0%B8%A2%E0%B8%81%E0%B8%82%E0%B8%A2%E0%B8%B0'.split('=')[1])}</span>
+      </button>
+      </div>
+    </div>
+  </div>
 );
 const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
     <div className={`game-overlay ${isVisible ? 'visible' : ''}`}>
@@ -1878,36 +1939,36 @@ const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
             <h2>{ud('mission_done=%E0%B8%A0%E0%B8%B2%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88%E0%B9%80%E0%B8%AA%E0%B8%A3%E0%B9%87%E0%B8%88%E0%B8%AA%E0%B8%B4%E0%B9%89%E0%B8%99!'.split('=')[1])}</h2>
             <div className="results-summary">
                 <div className="summary-item">
-                    <span className="label">{ud('total_score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%E0%B8%A3%E0%B8%A7%E0%B8%A1'.split('=')[1])}</span>
-                    <span className="value">⭐ {Math.round(stats.score)}</span>
+                    <span className="label">{cp(0x2B50)} {ud('total_score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%E0%B8%A3%E0%B8%A7%E0%B8%A1'.split('=')[1])}</span>
+                    <span className="value">{Math.round(stats.score)}</span>
                 </div>
                 <div className="summary-item">
-                    <span className="label">{ud('total_collected=%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%9A%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%97%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B8%AB%E0%B8%A1%E0%B8%94'.split('=')[1])}</span>
-                    <span className="value">🧹 {stats.collected}</span>
+                    <span className="label">{cp(0x1F5D1)} {ud('total_collected=%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%9A%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%97%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B8%AB%E0%B8%A1%E0%B8%94'.split('=')[1])}</span>
+                    <span className="value">{stats.collected}</span>
                 </div>
                 <div className="summary-item">
-                    <span className="label">{ud('sorted_ok=%E0%B9%81%E0%B8%A2%E0%B8%81%E0%B8%96%E0%B8%B9%E0%B8%81%E0%B8%95%E0%B9%89%E0%B8%AD%E0%B8%87'.split('=')[1])}</span>
-                    <span className="value">✅ {stats.sortedCorrectly}</span>
+                    <span className="label">{cp(0x2705)} {ud('sorted_ok=%E0%B9%81%E0%B8%A2%E0%B8%81%E0%B8%96%E0%B8%B9%E0%B8%81%E0%B8%95%E0%B9%89%E0%B8%AD%E0%B8%87'.split('=')[1])}</span>
+                    <span className="value">{stats.sortedCorrectly}</span>
                 </div>
                 <div className="summary-item">
-                    <span className="label">{ud('sorted_ng=%E0%B9%81%E0%B8%A2%E0%B8%81%E0%B8%9C%E0%B8%B4%E0%B8%94'.split('=')[1])}</span>
-                    <span className="value">❌ {stats.incorrect}</span>
+                    <span className="label">{cp(0x274C)} {ud('sorted_ng=%E0%B9%81%E0%B8%A2%E0%B8%81%E0%B8%9C%E0%B8%B4%E0%B8%94'.split('=')[1])}</span>
+                    <span className="value">{stats.incorrect}</span>
                 </div>
             </div>
             
             <h3>{ud('rewards=%E0%B8%A3%E0%B8%B2%E0%B8%87%E0%B8%A7%E0%B8%B1%E0%B8%A5%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%A3%E0%B8%B1%E0%B8%9A'.split('=')[1])}</h3>
             <div className="results-gains">
-                 <div className="gains-item">
-                    <span className="gains-label">XP</span>
-                    <span className="gains-value">✨ +{gains.xp}</span>
+                <div className="gains-item">
+                    <span className="gains-label">{cp(0x26A1)} XP</span>
+                    <span className="gains-value">+{gains.xp}</span>
                 </div>
                 <div className="gains-item">
-                    <span className="gains-label">{ud('coins=%E0%B9%80%E0%B8%AB%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B8%8D'.split('=')[1])}</span>
-                    <span className="gains-value">🪙 +{gains.coins}</span>
+                    <span className="gains-label">{cp(0x1FA99)} {ud('coins=%E0%B9%80%E0%B8%AB%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B8%8D'.split('=')[1])}</span>
+                    <span className="gains-value">+{gains.coins}</span>
                 </div>
                 <div className="gains-item">
-                    <span className="gains-label">{ud('coral=%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%9B%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%B1%E0%B8%87'.split('=')[1])}</span>
-                    <span className="gains-value">🪸 +{gains.coralFragments}</span>
+                    <span className="gains-label">{cp(0x1FAA8)} {ud('coral=%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%9B%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%B1%E0%B8%87'.split('=')[1])}</span>
+                    <span className="gains-value">+{gains.coralFragments}</span>
                 </div>
             </div>
 
@@ -1921,5 +1982,24 @@ const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
 
 const root = createRoot(document.getElementById('root')!);
 root.render(<Game />);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

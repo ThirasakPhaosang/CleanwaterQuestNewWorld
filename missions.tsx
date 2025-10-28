@@ -92,6 +92,7 @@ const WEEKLY_CONTRACT_POOL: ContractTemplate[] = [
 
 // --- DOM ELEMENTS ---
 const missionsButton = document.querySelector('[data-menu="missions"]');
+import audio from './audio';
 const missionsOverlay = document.getElementById('missions-overlay');
 const missionsCloseBtn = document.getElementById('missions-close-btn');
 const dailyTab = document.getElementById('daily-quests-tab');
@@ -283,6 +284,7 @@ function openMissionsModal() {
     checkAndResetMissions();
     renderMissions();
     missionsOverlay?.classList.remove('hidden');
+    try { audio.uiOpen(); } catch {}
     
     // Clear any previous timer and start a new one
     if (timerIntervalId) clearInterval(timerIntervalId);
@@ -307,6 +309,7 @@ function openMissionsModal() {
 
 function closeMissionsModal() {
     missionsOverlay?.classList.add('hidden');
+    try { audio.uiClose(); } catch {}
     // FIX: Clear the interval when the modal is closed to prevent memory leaks.
     if (timerIntervalId) clearInterval(timerIntervalId);
     timerIntervalId = null;
@@ -336,6 +339,7 @@ function claimReward(quest: ActiveQuest, isWeekly: boolean) {
     if (questToUpdate && !questToUpdate.claimed) {
         questToUpdate.claimed = true;
         console.log(`Claimed reward for ${questToUpdate.templateId}`);
+        try { audio.sfx.result(); } catch {}
         savePlayerProgress(progress);
         renderMissions(); // Re-render to show the claimed state
     }
@@ -348,6 +352,7 @@ function handleRefresh() {
         progress.daily.quests = generateNewDailyQuests();
         savePlayerProgress(progress);
         renderMissions();
+        try { audio.uiOpen(); } catch {}
     }
 }
 
@@ -358,7 +363,7 @@ function initMissions() {
         return;
     }
 
-    missionsButton.addEventListener('click', openMissionsModal);
+    missionsButton.addEventListener('click', () => { openMissionsModal(); try { audio.uiClick(); } catch {} });
     missionsCloseBtn.addEventListener('click', closeMissionsModal);
     missionsOverlay.addEventListener('click', (e) => {
         if (e.target === missionsOverlay) closeMissionsModal();
@@ -366,7 +371,7 @@ function initMissions() {
 
     dailyTab.addEventListener('click', () => switchTab('daily'));
     weeklyTab.addEventListener('click', () => switchTab('weekly'));
-    refreshBtn.addEventListener('click', handleRefresh);
+    refreshBtn.addEventListener('click', () => { handleRefresh(); try { audio.uiClick(); } catch {} });
 
     // Set initial view
     switchTab('daily');

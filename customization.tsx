@@ -76,6 +76,7 @@ const TRAILS: CustomizationItem[] = [
 const DATA: CustomizationItem[] = [...COLORS, ...FLAGS, ...DECALS, ...TRAILS];
 
 // DOM
+import audio from './audio';
 const overlay = document.getElementById('customization-overlay');
 const closeBtn = document.getElementById('customization-close-btn');
 const tabs = document.querySelectorAll('.customization-tab');
@@ -206,6 +207,7 @@ function onOptionClick(e: Event) {
   document.querySelectorAll(`.customization-view[id^="${type}"] .option-chip`).forEach((el) => el.classList.remove('selected'));
   chip.classList.add('selected');
   updatePreview();
+  try { audio.uiClick(); } catch {}
 }
 
 function handleConfirm() {
@@ -219,6 +221,7 @@ function handleConfirm() {
     }, { merge: true });
   } catch {}
   overlay?.classList.add('hidden');
+  try { audio.sfx.result(); } catch {}
 }
 
 function handleReset() {
@@ -238,9 +241,10 @@ export function openCustomizationModal() {
   renderOptions();
   updatePreview();
   overlay.classList.remove('hidden');
+  try { audio.uiOpen(); } catch {}
 }
 
-function closeModal() { overlay?.classList.add('hidden'); }
+function closeModal() { overlay?.classList.add('hidden'); try { audio.uiClose(); } catch {} }
 
 function init() {
   if (!overlay || !closeBtn) return;
@@ -248,9 +252,8 @@ function init() {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
   tabs.forEach((t) => t.addEventListener('click', switchTab));
   document.getElementById('customization-content')?.addEventListener('click', onOptionClick);
-  confirmBtn?.addEventListener('click', handleConfirm);
-  resetBtn?.addEventListener('click', handleReset);
+  confirmBtn?.addEventListener('click', (e)=>{ handleConfirm(); try { audio.uiClick(); } catch {} });
+  resetBtn?.addEventListener('click', (e)=>{ handleReset(); try { audio.uiClick(); } catch {} });
 }
 
 init();
-

@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="reef.css" />
     <link rel="stylesheet" href="leaderboard.css" />
     <link rel="stylesheet" href="redeem.css" />
+    <link rel="stylesheet" href="settings.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&family=Poppins:wght@400;600;700&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
@@ -159,6 +160,22 @@
 
         </main>
         
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-overlay" class="hidden">
+        <div id="settings-modal">
+            <button id="settings-close-btn" class="close-button" aria-label="Close settings">&times;</button>
+            <header><h2>ตั้งค่า</h2></header>
+            <div class="settings-section">
+                <h3>เสียง</h3>
+                <div class="settings-audio-grid">
+                    <div class="settings-row"><label>เพลง</label><input id="settings-vol-music" type="range" min="0" max="1" step="0.01"><div id="settings-vm" class="val">0</div></div>
+                    <div class="settings-row"><label>เอฟเฟกต์</label><input id="settings-vol-sfx" type="range" min="0" max="1" step="0.01"><div id="settings-vs" class="val">0</div></div>
+                    <div class="settings-row"><label>ปุ่ม/ระบบ</label><input id="settings-vol-ui" type="range" min="0" max="1" step="0.01"><div id="settings-vu" class="val">0</div></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Depart Confirmation Modal -->
@@ -499,5 +516,6 @@
     <script type="module" src="reef.tsx"></script>
     <script type="module" src="leaderboard.tsx"></script>
     <script type="module" src="redeem.tsx"></script>
+    <script type="module" src="settings.tsx"></script>
 </body>
 </html>

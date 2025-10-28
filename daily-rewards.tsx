@@ -33,6 +33,7 @@ const dailyRewardsData = [
 ];
 
 // --- DOM ELEMENTS ---
+import audio from './audio';
 const rewardsButton = document.querySelector('[data-menu="rewards"]') as HTMLButtonElement;
 const overlay = document.getElementById('daily-rewards-overlay');
 const closeButton = document.getElementById('daily-rewards-close-btn');
@@ -212,6 +213,7 @@ function handleClaim() {
         
         // Add animation/feedback here later
         console.log(`Claimed reward for day ${progress.streak}`);
+        try { audio.sfx.result(); } catch {}
         
         // Re-render UI to show claimed state and update notification
         renderUI();
@@ -224,6 +226,7 @@ function openModal() {
     renderUI(); // Ensure UI is up-to-date before showing
     overlay.classList.remove('hidden');
     rewardsButton?.classList.remove('has-notification'); // Hide dot once opened
+    try { audio.uiOpen(); } catch {}
 
     // Scroll to the current day
     const claimableItem = rewardsGrid?.querySelector('.claimable') as HTMLElement;
@@ -241,12 +244,13 @@ function openModal() {
 function closeModal() {
     if (!overlay) return;
     overlay.classList.add('hidden');
+    try { audio.uiClose(); } catch {}
 }
 
 // --- INITIALIZATION ---
 function initDailyRewards() {
     if (rewardsButton && overlay && closeButton && claimButton) {
-        rewardsButton.addEventListener('click', openModal);
+        rewardsButton.addEventListener('click', (e)=>{ openModal(); try { audio.uiClick(); } catch {} });
         closeButton.addEventListener('click', closeModal);
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {

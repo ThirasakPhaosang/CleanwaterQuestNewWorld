@@ -10,6 +10,8 @@ import { openUpgradesModal } from './upgrades';
 import { openReefModal } from './reef';
 import { openLeaderboardModal } from './leaderboard';
 import { openRedeemModal } from './redeem';
+import audio from './audio';
+import { openSettingsModal } from './settings';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAAXqmfSy_q_Suh4td5PeLz-ZsuICf-KwI",
@@ -64,6 +66,17 @@ auth.onAuthStateChanged((user) => {
 });
 
 function setupMenuActions() {
+    // Audio bootstrap: start after first gesture
+    const startAudioOnce = async () => { try { await audio.init(); audio.setVolume('music', 0.5); await audio.startMusic('menu'); } catch {} };
+    const pd = () => { startAudioOnce(); document.removeEventListener('pointerdown', pd as any); };
+    document.addEventListener('pointerdown', pd as any, { once: true } as any);
+    // Play click SFX on common buttons
+    document.addEventListener('click', (e) => {
+        const t = e.target as HTMLElement;
+        if (t && (t.closest('button') || t.closest('.menu-button') || t.closest('[data-menu]') || t.getAttribute('role') === 'button')) {
+            audio.uiClick();
+        }
+    }, { capture: true });
     const loginOverlay = document.getElementById('login-required-overlay');
     const loginGoBtn = document.getElementById('login-go-btn');
     const loginCancelBtn = document.getElementById('login-cancel-btn');
@@ -118,6 +131,9 @@ function setupMenuActions() {
 
     const leaderboardBtn = document.querySelector('[data-menu="leaderboard"]');
     if (leaderboardBtn) { leaderboardBtn.addEventListener('click', () => ensureSignedIn(openLeaderboardModal)); }
+
+    const settingsBtn = document.querySelector('[data-menu="settings"]');
+    if (settingsBtn) { settingsBtn.addEventListener('click', () => openSettingsModal()); }
 
     // Close overlays when clicking on the dim background
     loginOverlay?.addEventListener('click', (e) => { if (e.target === loginOverlay) loginOverlay.classList.add('hidden'); });
@@ -671,5 +687,7 @@ if (canvas) {
     }
 
     initialize();
+    // Move audio settings to Settings modal only (no floating button)
 }
 window.addEventListener('orientationchange', () => window.dispatchEvent(new Event('resize')));
+
