@@ -131,14 +131,16 @@ class AudioManager {
     await this.ensure(); if (!this.gains) return;
     this.stopMusic();
     // Play only the bundled files (no fallback/generative layers)
+    const base: string = ((import.meta as any).env && (import.meta as any).env.BASE_URL) ? (import.meta as any).env.BASE_URL : '/';
+    const prefix = base.endsWith('/') ? base : base + '/';
     const menuTracks = [
-      'audio/mainmenu/perfect-beauty-191271.mp3'
+      `${prefix}audio/mainmenu/perfect-beauty-191271.mp3`
     ];
     const gameTracks = [
-      'audio/game/beach-fun-2-336147.mp3',
-      'audio/game/beach-fun-336146.mp3',
-      'audio/game/play-fun-336143.mp3',
-      'audio/game/playing-fun-on-the-beach-336145.mp3'
+      `${prefix}audio/game/beach-fun-2-336147.mp3`,
+      `${prefix}audio/game/beach-fun-336146.mp3`,
+      `${prefix}audio/game/play-fun-336143.mp3`,
+      `${prefix}audio/game/playing-fun-on-the-beach-336145.mp3`
     ];
     const list = kind === 'menu' ? menuTracks : gameTracks;
     const pick = list[(Math.random() * list.length) | 0];
