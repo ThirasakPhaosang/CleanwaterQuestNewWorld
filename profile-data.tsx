@@ -216,8 +216,14 @@ export function savePlayerProfile(profile: PlayerProfile) {
     // Firestore mirror (best effort)
     try {
         const db = firebase.firestore();
+        const { stats, ...rest } = profile as any;
+        // Important: avoid overwriting server-computed aggregates in stats
+        // (weeklyScore, totalScore, bestScore, totals). Let game session writes handle them.
         db.collection('players').doc(profile.uid).set(
-            { ...profile, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+            {
+                ...rest,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            },
             { merge: true }
         );
     } catch {}

@@ -122,9 +122,10 @@ export const fetchLeaderboardTop = async (board: 'weekly'|'all-time'|'reef', lim
   // so the query does not fail due to other users with privacy disabled.
   const snap = await db
     .collection('players')
-    .where('privacy.showOnLeaderboard', '==', true)
     .orderBy(field, 'desc')
     .limit(limit)
     .get();
   return snap.docs.map((d) => ({ uid: d.id, ...(d.data() as any) }));
 };
+
+

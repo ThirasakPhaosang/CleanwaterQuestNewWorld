@@ -516,9 +516,42 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
     const [isTouching, setIsTouching] = useState(false);
     const showHint = !isTouching;
     const [collected, setCollected] = useState<CollectedTrash[]>([]);
+    // Fullscreen state
+    const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     const collectedRef = useRef(collected);
     useEffect(() => { collectedRef.current = collected; }, [collected]);
     const maxCapacity = useMemo(() => getCapacityForLevel(profile.upgrades.capacity.level), [profile.upgrades.capacity.level]);
+
+    // --- Fullscreen helpers ---
+    const getIsFullscreen = useCallback(() => {
+        const d: any = document as any;
+        return !!(document.fullscreenElement || d.webkitFullscreenElement || d.msFullscreenElement);
+    }, []);
+
+    const toggleFullscreen = useCallback(() => {
+        const d: any = document as any;
+        const el: any = document.documentElement as any;
+        if (getIsFullscreen()) {
+            const exit = d.exitFullscreen || d.webkitExitFullscreen || d.msExitFullscreen;
+            if (exit) exit.call(document);
+        } else {
+            const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+            if (req) req.call(el);
+        }
+    }, [getIsFullscreen]);
+
+    useEffect(() => {
+        const onChange = () => setIsFullscreen(getIsFullscreen());
+        document.addEventListener('fullscreenchange', onChange);
+        document.addEventListener('webkitfullscreenchange', onChange as any);
+        document.addEventListener('msfullscreenchange', onChange as any);
+        onChange();
+        return () => {
+            document.removeEventListener('fullscreenchange', onChange);
+            document.removeEventListener('webkitfullscreenchange', onChange as any);
+            document.removeEventListener('msfullscreenchange', onChange as any);
+        };
+    }, [getIsFullscreen]);
 
     // Mobile: ใช้พื้นที่เล่นทั้งจอ แทนปุ่ม
     
@@ -669,7 +702,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             if ('touches' in e) {
                 const t = e.touches[0];
                 touchStartX = t.clientX; touchStartY = t.clientY;
-                dropTimer = window.setTimeout(() => { startLowering(t.clientX, t.clientY); dropTimer = null; }, 180);
+                dropTimer = window.setTimeout(() => { startLowering(t.clientX, t.clientY); dropTimer = null; }, 240);
             } else {
                 startLowering((e as MouseEvent).clientX, (e as MouseEvent).clientY);
             }
@@ -1346,7 +1379,8 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
         
             const targetX = Math.max(100, Math.min(window.innerWidth - 100, boatPos.current.targetX));
             // Slow down boat movement for better mobile control
-            boatPos.current.x += (targetX - boatPos.current.x) * 0.06;
+            const follow = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ? 0.045 : 0.08;
+            boatPos.current.x += (targetX - boatPos.current.x) * follow;
             const boatScreenX = boatPos.current.x;
             const scrollRatio = boatScreenX / window.innerWidth;
             const worldScrollX = -scrollRatio * (WORLD_WIDTH - window.innerWidth);
@@ -1737,7 +1771,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             </div>
             <svg className="line-svg"><path ref={lineRef} stroke="#2b2b2b" strokeWidth="2.5" fill="none" strokeLinecap="round" /></svg>
             <BoatSVG ref={boatRef} customization={profile.customization} />
-            <HUD collected={collected.length} maxCapacity={maxCapacity} score={0} />
+            <HUD collected={collected.length} maxCapacity={maxCapacity} score={0} onToggleFullscreen={toggleFullscreen} isFullscreen={isFullscreen} />
             {/* คำใบ้เล็กๆ สำหรับมือถือ จะโชว์ชั่วคราว ไม่รบกวนการเล่น */}
             {showHint && (
                 <div className="tutorial-tooltip">
@@ -1761,10 +1795,11 @@ const BoatSVG = React.forwardRef<SVGSVGElement, { customization: PlayerProfile['
     </svg>
 ));
 
-const HUD: FC<{ collected: number, maxCapacity: number, score: number }> = ({ collected, maxCapacity, score }) => (
+const HUD: FC<{ collected: number, maxCapacity: number, score: number, onToggleFullscreen?: () => void, isFullscreen?: boolean }> = ({ collected, maxCapacity, score, onToggleFullscreen, isFullscreen }) => (
     <div id="game-hud">
         <div className="hud-element-wrapper"><div className="hud-element capacity-bar"><span>{ud('hud_collected=%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%9A%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7%3A'.split('=')[1])} {collected}/{maxCapacity}</span><div className="capacity-bar-bg"><div className="capacity-bar-fill" style={{ width: `${(collected / maxCapacity) * 100}%` }}></div></div></div></div>
         <div className="hud-element-wrapper"><div className="hud-element game-score"><span>{ud('score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%3A'.split('=')[1])} {score}</span></div></div>
+        <div className="hud-element-wrapper"><button className="hud-fs-btn" onClick={onToggleFullscreen} title={isFullscreen ? ud('exit_fs=%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B9%80%E0%B8%95%E0%B9%87%E0%B8%A1%E0%B8%88%E0%B8%AD'.split('=')[1]) : ud('enter_fs=%E0%B9%80%E0%B8%95%E0%B9%87%E0%B8%A1%E0%B8%88%E0%B8%AD'.split('=')[1])}>⤢</button></div>
     </div>
 );
 
@@ -1822,3 +1857,5 @@ const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
 
 const root = createRoot(document.getElementById('root')!);
 root.render(<Game />);
+
+

@@ -197,6 +197,8 @@ html, body, #root {
     padding: 0.5rem 1rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
+.hud-fs-btn { background: transparent; color: #fff; border: 1px solid var(--hud-border); border-radius: 24px; padding: 0.35rem 0.6rem; font-size: 1rem; cursor: pointer; }
+.hud-fs-btn:hover { border-color: #fff; }
 .hud-element {
     color: white; text-shadow: 2px 2px 3px rgba(0,0,0,0.5); font-size: 1.25rem;
     display: flex; align-items: center; gap: 0.75rem;
@@ -773,3 +775,5 @@ main.is-sorting .cursor-ring {
 }
 
 /* Removed large mobile button; controls are full-screen touch gestures */
+
+@media (orientation: landscape) and (max-height: 560px) { #game-hud { padding: 0.4rem 0.8rem; } .hud-element-wrapper { padding: 0.25rem 0.6rem; border-radius: 36px; } .tutorial-tooltip { bottom: 8px; font-size: 0.9rem; } }
