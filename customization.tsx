@@ -1,6 +1,7 @@
 // FIX: Switched to Firebase v8 compatibility imports.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
 import { PlayerProfile, getPlayerProfile, savePlayerProfile } from './profile-data';
 
 
@@ -17,6 +18,7 @@ const firebaseConfig = {
 // FIX: Switched to Firebase v8 compatibility initialization.
 const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 // --- TYPE DEFINITIONS ---
 type UnlockType = 'free' | 'level' | 'coins' | 'stat' | 'contract';
@@ -233,7 +235,10 @@ function handleOptionClick(e: Event) {
     const type = (chip as HTMLElement).dataset.type! as CustomizationItem['type'];
 
     // Update temporary state
-    if (type === 'color') temporaryCustomization.boatColor = id;
+    if (type === 'color') {
+        const colorItem = CUSTOMIZATION_DATA.find(i => i.id === id);
+        if (colorItem) temporaryCustomization.boatColor = colorItem.preview; // use hex color, not id
+    }
     else if (type === 'flag') temporaryCustomization.flagId = id;
     else if (type === 'decal') temporaryCustomization.decalId = id;
     else if (type === 'trail') temporaryCustomization.trailId = id;
@@ -248,6 +253,13 @@ function handleConfirm() {
     if(!currentProfile) return;
     currentProfile.customization = temporaryCustomization;
     savePlayerProfile(currentProfile);
+    try {
+        // Mirror to Firestore subdocument for easier cross-device sync/history
+        db.collection('players').doc(currentProfile.uid).collection('customization').doc('current').set({
+            ...currentProfile.customization,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+    } catch {}
     closeModal();
 }
 

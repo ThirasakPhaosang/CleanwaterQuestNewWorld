@@ -647,31 +647,48 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
         for (let i = 0; i < 40; i++) objects.push(spawnObject('trash'));
         gameObjectsRef.current = objects;
         
-        const handleInteractionStart = (e: MouseEvent | TouchEvent) => {
+        // Long-press threshold for mobile to drop hook (avoid dropping while dragging boat)
+        let dropTimer: number | null = null;
+        let touchStartX = 0, touchStartY = 0;
+        const startLowering = (clientX:number, clientY:number) => {
             if (hookState.current.status !== 'idle' || isPaused || collectedRef.current.length >= maxCapacity) return;
-            e.preventDefault();
-            setIsTouching(true);
-            const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-            const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
             const worldScrollX = gsap.getProperty(gameWorldRef.current, "x") as number;
             const worldX = clientX - worldScrollX;
             hookState.current.status = 'lowering';
             hookState.current.targetY = clientY;
             hookState.current.targetX = worldX;
             gameContainerRef.current?.classList.add('is-hook-active');
-            // Add ripple where hook touches surface
             const waterLine = window.innerHeight * (WATER_LEVEL_VH / 100);
             ripplesRef.current.push({ x: clientX, y: waterLine-2, r: 4, life: 1 });
+        };
+
+        const handleInteractionStart = (e: MouseEvent | TouchEvent) => {
+            if (isPaused || collectedRef.current.length >= maxCapacity) return;
+            e.preventDefault();
+            setIsTouching(true);
+            if ('touches' in e) {
+                const t = e.touches[0];
+                touchStartX = t.clientX; touchStartY = t.clientY;
+                dropTimer = window.setTimeout(() => { startLowering(t.clientX, t.clientY); dropTimer = null; }, 180);
+            } else {
+                startLowering((e as MouseEvent).clientX, (e as MouseEvent).clientY);
+            }
         };
         const handleInteractionEnd = () => { 
             if (hookState.current.status === 'lowering') hookState.current.status = 'raising'; 
             setIsTouching(false);
+            if (dropTimer) { clearTimeout(dropTimer); dropTimer = null; }
             gameContainerRef.current?.classList.remove('is-hook-active');
         };
         const handleMove = (e: MouseEvent | TouchEvent) => {
             if (isPaused) return;
-            const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-            const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+            const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+            const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+            // If user moved finger before long-press fired, cancel dropping
+            if ('touches' in e && dropTimer) {
+                const dx = clientX - touchStartX, dy = clientY - touchStartY;
+                if (dx*dx + dy*dy > 18*18) { clearTimeout(dropTimer); dropTimer = null; }
+            }
             boatPos.current.targetX = clientX;
             gsap.to([cursorDotRef.current, cursorRingRef.current], {
                 duration: 0.3,
@@ -1328,7 +1345,8 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             };
         
             const targetX = Math.max(100, Math.min(window.innerWidth - 100, boatPos.current.targetX));
-            boatPos.current.x += (targetX - boatPos.current.x) * 0.1;
+            // Slow down boat movement for better mobile control
+            boatPos.current.x += (targetX - boatPos.current.x) * 0.06;
             const boatScreenX = boatPos.current.x;
             const scrollRatio = boatScreenX / window.innerWidth;
             const worldScrollX = -scrollRatio * (WORLD_WIDTH - window.innerWidth);

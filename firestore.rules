@@ -75,12 +75,107 @@ service cloud.firestore {
 
     // OPTIONAL AGGREGATES --------------------------------------------------
     // Public stats (e.g., reef global totals, leaderboard snapshots)
-    match /public/{docId} { allow read: if true; allow write: if isAdmin(); }
+    // Allow readingทุกคน และเปิดสิทธิ์อัปเดตเฉพาะ doc "reef" แบบมีข้อจำกัดด้านความปลอดภัย
+    match /public/{docId} {
+      allow read: if true;
+      // Admin เขียนได้เสมอ
+      allow write: if isAdmin();
+
+      // อนุญาตให้ผู้ใช้ทั่วไปอัปเดตสถานะแนวปะการัง (รวมยอดทั่วโลก) ด้วยข้อจำกัด:
+      // - อัปเดตเฉพาะ progress/target/contributors/updatedAt เท่านั้น
+      // - progress ต้องเพิ่มขึ้น ไม่ลดลง และเพิ่มได้ครั้งละไม่เกิน 10,000
+      // - contributors เพิ่มขึ้นทีละ 0 หรือ 1 เท่านั้น
+      // - target ต้องคงเดิม (เปลี่ยนได้เฉพาะแอดมิน)
+      allow update: if docId == 'reef' && isSignedIn() &&
+        request.resource.data.keys().hasOnly(['progress','target','contributors','updatedAt']) &&
+        request.resource.data.target == resource.data.target &&
+        request.resource.data.progress >= resource.data.progress &&
+        request.resource.data.progress <= resource.data.progress + 10000 &&
+        request.resource.data.contributors >= resource.data.contributors &&
+        request.resource.data.contributors <= resource.data.contributors + 1;
+    }
     match /leaderboard/{boardId} { allow read: if true; allow write: if isAdmin(); }
 
     // REDEEM CODES MASTER --------------------------------------------------
     // Master list of redeem codes should never be readable/writeable by clients.
     // Use Cloud Functions to validate/redeem and write to players/{uid}/redeem_claims.
+    match /redeem_codes/{codeId} { allow read, write: if false; }
+  }
+}
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // --- Players (profile + stats) ---
+    // ใช้โดย: menu, profile-data, game(sessions), leaderboard, customization, missions, rewards, reef, upgrades, redeem
+    match /players/{uid} {
+      // อ่านของตัวเอง หรืออ่านของผู้อื่นที่ยอมให้โชว์บนกระดาน (privacy.showOnLeaderboard = true)
+      allow read: if isOwner(uid) || (resource.data.privacy.showOnLeaderboard == true);
+
+      // เขียน/อัปเดตได้เฉพาะเจ้าของเอกสาร
+      allow write: if isOwner(uid);
+
+      // รอบเล่นของผู้เล่น
+      match /sessions/{sid}          { allow read, write: if isOwner(uid); }
+      // ไอเท็ม/คอสเมติกที่ผู้เล่นถือครอง
+      match /inventory/{itemId}      { allow read, write: if isOwner(uid); }
+      // ค่าการแต่งเรือปัจจุบัน/พรีเซ็ต
+      match /customization/{docId}   { allow read, write: if isOwner(uid); }
+      // ระดับอัปเกรดที่ซื้อแล้ว
+      match /upgrades/{key}          { allow read, write: if isOwner(uid); }
+      // ความคืบหน้ามิชชัน
+      match /missions/{missionId}    { allow read, write: if isOwner(uid); }
+      // เคลมรางวัลรายวัน (YYYY-MM-DD)
+      match /rewards/{dateId}        { allow read, write: if isOwner(uid); }
+      // เคลมโค้ด (บันทึกเฉพาะของตัวเอง)
+      match /redeem_claims/{codeId}  { allow read, write: if isOwner(uid); }
+      // ประวัติสมทบแนวปะการังรายผู้เล่น
+      match /reef_contributions/{cid}{ allow read, write: if isOwner(uid); }
+    }
+
+    // --- Read‑only catalogs (แสดงข้อมูลคงที่ในเกม) ---
+    match /customization_catalog/{id} { allow read: if true; allow write: if false; }
+    match /missions_catalog/{id}      { allow read: if true; allow write: if false; }
+    match /upgrades_catalog/{id}      { allow read: if true; allow write: if false; }
+    match /rewards_catalog/{id}       { allow read: if true; allow write: if false; }
+    match /reef_catalog/{id}          { allow read: if true; allow write: if false; }
+
+    // --- Public aggregates ---
+    // สถิติรวม (เช่น แนวปะการัง Global) อ่านได้ทุกคน
+    match /public/{docId} {
+      allow read: if true;
+
+      // Admin เขียนได้ทุกฟิลด์
+      allow write: if isAdmin();
+
+      // ผู้ใช้ทั่วไปอัปเดตได้เฉพาะ doc "reef" ด้วยข้อจำกัดความปลอดภัย
+      // - อนุญาตให้เปลี่ยนเฉพาะ progress/target/contributors/updatedAt
+      // - target ต้องคงเดิม (กันการแก้เป้า)  |  progress ต้องเพิ่มขึ้น ไม่ลดลง และครั้งละ ≤ 10,000
+      // - contributors เพิ่มได้ทีละ 0 หรือ 1 เท่านั้น
+      allow update: if docId == 'reef' && isSignedIn()
+        && request.resource.data.keys().hasOnly(['progress','target','contributors','updatedAt'])
+        && request.resource.data.target == resource.data.target
+        && request.resource.data.progress >= resource.data.progress
+        && request.resource.data.progress <= resource.data.progress + 10000
+        && request.resource.data.contributors >= resource.data.contributors
+        && request.resource.data.contributors <= resource.data.contributors + 1;
+    }
+
+    // --- Optional leaderboard snapshots (ถ้ามีทำรวมฝั่งเซิร์ฟเวอร์) ---
+    match /leaderboard/{boardId} { allow read: if true; allow write: if isAdmin(); }
+
+    // --- Redeem master (ห้าม client อ่าน/เขียน) ---
     match /redeem_codes/{codeId} { allow read, write: if false; }
   }
 }

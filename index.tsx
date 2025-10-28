@@ -58,14 +58,20 @@ async function initializeAuth() {
     googleLoginBtn.addEventListener('click', async () => {
       try {
         // FIX: Switched to Firebase v8 compatibility sign-in syntax.
-        await auth.signInWithPopup(googleProvider);
+        try {
+          await auth.signInWithPopup(googleProvider);
+        } catch (err) {
+          // Fallback for domains that are not authorized for popup yet
+          await auth.signInWithRedirect(googleProvider);
+          return;
+        }
         const user = auth.currentUser;
         if (user) await ensurePlayerProfile(user.uid, { displayName: user.displayName || 'SeaHero' });
         // On success, trigger transition instead of immediate redirect
         transitionToMenu();
       } catch (error) {
         console.error('Error during Google sign-in:', error);
-        alert('Failed to sign in with Google. Please try again.');
+        alert('Sign-in failed. Please add your deploy domain to Firebase Auth > Settings > Authorized domains or try again.');
       }
     });
   }

@@ -1,4 +1,4 @@
-// FIX: Switched to Firebase v8 compatibility imports.
+﻿// FIX: Switched to Firebase v8 compatibility imports.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
@@ -101,7 +101,7 @@ async function getLeaderboardData(playerProfile: PlayerProfile, tab: Leaderboard
             const mapped = cloud.map((u: any) => ({
                 uid: u.uid,
                 displayName: u.displayName || 'Player',
-                avatarId: u.avatarId || '??',
+                avatarId: u.avatarId || 'ðŸ™‚',
                 score: (tab === 'reef') ? (u.stats?.totalCoralContributed || 0) : (tab === 'weekly' ? (u.stats?.weeklyScore || 0) : (u.stats?.totalScore || 0)),
                 sortCorrect: u.stats?.totalSortedCorrect || 0,
                 bestRun: u.stats?.bestScore || 0,
@@ -113,12 +113,12 @@ async function getLeaderboardData(playerProfile: PlayerProfile, tab: Leaderboard
             return { ['all-time']: mapped } as any;
         }
     } catch {}
-    // Fallback: ไม่มี Firestore หรือยังไม่มีข้อมูล -> แสดงเฉพาะผู้เล่นปัจจุบัน
+    // Fallback: à¹„à¸¡à¹ˆà¸¡à¸µ Firestore à¸«à¸£à¸·à¸­à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥ -> à¹à¸ªà¸”à¸‡à¹€à¸‰à¸žà¸²à¸°à¸œà¸¹à¹‰à¹€à¸¥à¹ˆà¸™à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™
     const single: LeaderboardEntry = {
         uid: playerProfile.uid,
         displayName: playerProfile.displayName,
-        avatarId: (playerProfile as any).avatarId || '??',
-        score: (tab === 'reef') ? (playerProfile.stats.totalCoralContributed || 0) : (tab === 'weekly' ? (((playerProfile as any).stats?.weeklyScore) || 0) : (((playerProfile as any).stats?.totalScore) || 0)) ,
+        avatarId: (playerProfile as any).avatarId || 'ðŸ™‚',
+        score: (tab === 'reef') ? (playerProfile.stats.totalCoralContributed || 0) : (tab === 'weekly' ? (playerProfile.stats.weeklyCollected || 0) : (playerProfile.stats.bestScore || 0)),
         sortCorrect: playerProfile.stats.totalSortedCorrect,
         bestRun: playerProfile.stats.bestScore,
         contributed: playerProfile.stats.totalCoralContributed || 0,
@@ -152,30 +152,30 @@ function createEntryElement(entry: LeaderboardEntry, rank: number, isPlayer: boo
 
     if (currentTab === 'weekly') {
         mainScore = entry.score;
-        subStats = `♻️ ${entry.sortCorrect} | 🏆 ${formatScore(entry.bestRun)}`;
+        subStats = `â™»ï¸ ${entry.sortCorrect} | ðŸ† ${formatScore(entry.bestRun)}`;
     } else if (currentTab === 'all-time') {
         mainScore = entry.score * 5 + entry.sortCorrect * 10; // Mock all-time score
-        subStats = `♻️ ${entry.sortCorrect} | 🏆 ${formatScore(entry.bestRun)}`;
+        subStats = `â™»ï¸ ${entry.sortCorrect} | ðŸ† ${formatScore(entry.bestRun)}`;
     } else if (currentTab === 'reef') {
         mainScore = entry.contributed;
-        subStats = `🌊 Συνεισφορά`;
+        subStats = `ðŸŒŠ Î£Ï…Î½ÎµÎ¹ÏƒÏ†Î¿ÏÎ¬`;
     }
 
     // Normalize scores for each tab with real values from Firestore
     if (currentTab === 'weekly') {
         mainScore = entry.score;
-        subStats = `คะแนนจัดแยกรวม ${entry.sortCorrect} | ดีที่สุด ${formatScore(entry.bestRun)}`;
+        subStats = `à¸„à¸°à¹à¸™à¸™à¸ˆà¸±à¸”à¹à¸¢à¸à¸£à¸§à¸¡ ${entry.sortCorrect} | à¸”à¸µà¸—à¸µà¹ˆà¸ªà¸¸à¸” ${formatScore(entry.bestRun)}`;
     } else if (currentTab === 'all-time') {
         mainScore = entry.score;
-        subStats = `คะแนนจัดแยกรวม ${entry.sortCorrect} | ดีที่สุด ${formatScore(entry.bestRun)}`;
+        subStats = `à¸„à¸°à¹à¸™à¸™à¸ˆà¸±à¸”à¹à¸¢à¸à¸£à¸§à¸¡ ${entry.sortCorrect} | à¸”à¸µà¸—à¸µà¹ˆà¸ªà¸¸à¸” ${formatScore(entry.bestRun)}`;
     } else if (currentTab === 'reef') {
         mainScore = entry.contributed;
-        subStats = `รวมการสมทบปะการัง`;
+        subStats = `à¸£à¸§à¸¡à¸à¸²à¸£à¸ªà¸¡à¸—à¸šà¸›à¸°à¸à¸²à¸£à¸±à¸‡`;
     }
 
     li.innerHTML = `
         <div class="entry-rank" data-rank="${rank}">${rankDisplay}</div>
-        <div class="entry-avatar" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:22px;">${entry.avatarId || '🙂'}</div>
+        <div class="entry-avatar" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:22px;">${entry.avatarId || 'ðŸ™‚'}</div>
         <div class="entry-info">
             <div class="entry-name">${entry.displayName}</div>
             <div class="entry-sub-stats">${subStats}</div>
@@ -221,7 +221,7 @@ async function renderLeaderboard() {
         myRankEl.innerHTML = ''; // Clear previous
         myRankEl.appendChild(createEntryElement(myData, myRank, true));
     } else {
-        myRankEl.innerHTML = `<div class="leaderboard-entry is-player"><div class="entry-info">Δεν έχετε κατάταξη ακόμα!</div></div>`;
+        myRankEl.innerHTML = `<div class="leaderboard-entry is-player"><div class="entry-info">Î”ÎµÎ½ Î­Ï‡ÎµÏ„Îµ ÎºÎ±Ï„Î¬Ï„Î±Î¾Î· Î±ÎºÏŒÎ¼Î±!</div></div>`;
     }
 }
 
@@ -285,7 +285,5 @@ export function openLeaderboardModal() {
     overlay.classList.remove('hidden');
     startAutoRefresh();
 }
-
-
 
 

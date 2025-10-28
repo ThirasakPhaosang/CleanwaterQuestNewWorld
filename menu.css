@@ -111,6 +111,8 @@ body {
     width: 100%;
     height: 100%;
     z-index: 0;
+    content-visibility: auto;
+    contain-intrinsic-size: 1000px 700px;
 }
 .depth-layer {
     position: absolute;
@@ -119,6 +121,7 @@ body {
     width: 110%;
     height: 110%;
     transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    content-visibility: auto;
 }
 .layer-far-bg {
     background: var(--primary-bg);
@@ -456,7 +459,7 @@ body {
     position: relative;
     z-index: 1;
 }
-.dock-button .button-text { font-weight: 600; font-size: 0.75rem; }
+.dock-button .button-text { font-weight: 600; font-size: 0.75rem; white-space: normal; line-height: 1.05; text-align: center; }
 
 .dock-button:hover {
     color: var(--text-color);
@@ -626,7 +629,7 @@ body {
         height: 60px;
     }
     .dock-button .button-icon { font-size: 1.25rem; }
-    .dock-button .button-text { font-size: 0.6rem; }
+    .dock-button .button-text { font-size: 0.6rem; white-space: normal; line-height: 1.05; }
 
     .notification-dot {
       top: 4px;
@@ -641,10 +644,7 @@ body {
     #user-profile:hover {
       transform: translateX(-50%) translateY(0);
     }
-    .dock-button .button-text {
-        font-size: 0.55rem;
-        white-space: nowrap;
-    }
+    .dock-button .button-text { font-size: 0.55rem; white-space: normal; line-height: 1.05; }
     .dock-button {
         gap: 0.2rem;
     }
@@ -751,7 +751,7 @@ body {
   #bottom-dock { max-width: 520px; padding: 0.15rem 0.4rem; }
   .dock-button { height: 48px; }
   .dock-button .button-icon { font-size: 1.05rem; }
-  .dock-button .button-text { font-size: 0.54rem; }
+  .dock-button .button-text { font-size: 0.54rem; white-space: normal; line-height: 1.05; }
 
   .notification-dot {
       top: 6px;

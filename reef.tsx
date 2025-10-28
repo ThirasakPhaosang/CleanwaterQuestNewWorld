@@ -1,6 +1,7 @@
 // FIX: Switched to Firebase v8 compatibility imports.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
 import { PlayerProfile, getPlayerProfile, savePlayerProfile } from './profile-data';
 
 const firebaseConfig = {
@@ -16,6 +17,7 @@ const firebaseConfig = {
 // FIX: Switched to Firebase v8 compatibility initialization.
 const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 // --- TYPE DEFINITIONS ---
 interface GlobalReefState {
@@ -55,18 +57,8 @@ let currentPlayer: firebase.User | null = null;
 // --- DATA MANAGEMENT ---
 function getGlobalReefState(): GlobalReefState {
     const saved = localStorage.getItem(GLOBAL_REEF_STORAGE_KEY);
-    if (saved) {
-        return JSON.parse(saved);
-    }
-    // Default initial state
-    return {
-        season: 1,
-        progress: 15000, // Start with some initial progress for demonstration
-        target: 100000,
-        contributors: 1234,
-        lastCheckedMilestone: 0,
-        updatedAt: Date.now()
-    };
+    if (saved) return JSON.parse(saved);
+    return { season: 1, progress: 0, target: 100000, contributors: 0, lastCheckedMilestone: 0, updatedAt: Date.now() };
 }
 
 function saveGlobalReefState(state: GlobalReefState) {
@@ -114,7 +106,7 @@ function updateEcoFact() {
 }
 
 // --- CORE LOGIC ---
-function handleDonation(amount: number) {
+async function handleDonation(amount: number) {
     if (!currentPlayer) return;
 
     const profile = getPlayerProfile(currentPlayer);
@@ -130,11 +122,25 @@ function handleDonation(amount: number) {
     profile.stats.totalCoralContributed += amount;
     savePlayerProfile(profile);
 
-    // Update global state
-    reefState.progress += amount;
-    // For simplicity, we'll just increment contributors on any donation
-    reefState.contributors++; 
-    saveGlobalReefState(reefState);
+    // Update global reef in Firestore (transaction); fallback to local if fails
+    try {
+        await db.runTransaction(async (tx) => {
+            const ref = db.collection('public').doc('reef');
+            const snap = await tx.get(ref);
+            const cur = snap.exists ? (snap.data() as any) : { progress: 0, target: 100000, contributors: 0 };
+            tx.set(ref, {
+                progress: (cur.progress || 0) + amount,
+                target: cur.target || 100000,
+                contributors: (cur.contributors || 0) + 1,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        });
+    } catch (e) {
+        console.warn('Global reef update failed, using local state', e);
+        reefState.progress += amount;
+        reefState.contributors++;
+        saveGlobalReefState(reefState);
+    }
     
     // Animate and re-render
     // TODO: Add a nice particle animation here
@@ -153,6 +159,26 @@ export function openReefModal() {
         alert("จำเป็นต้องเข้าสู่ระบบเพื่อเข้าถึงฟีเจอร์นี้!");
         return;
     }
+
+    // Subscribe to global reef doc for live updates
+    try {
+        db.collection('public').doc('reef').onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data() as any;
+                const local = getGlobalReefState();
+                const merged: GlobalReefState = {
+                    season: local.season,
+                    progress: data.progress || 0,
+                    target: data.target || local.target,
+                    contributors: data.contributors || 0,
+                    lastCheckedMilestone: local.lastCheckedMilestone || 0,
+                    updatedAt: Date.now(),
+                };
+                saveGlobalReefState(merged);
+                renderReefUI();
+            }
+        });
+    } catch {}
 
     renderReefUI();
     updateEcoFact();
