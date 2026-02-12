@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, FC, DragEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { gsap } from 'gsap';
@@ -66,13 +67,13 @@ const BASE_HOOK_SPEED = 420;
 const TRASH_DATA: Record<TrashId, TrashData> = {
   bottle: { name: ud('item_bottle=%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81'.split('=')[1]), icon: cp(0x1F9F4), type: 'recyclable', points: 10, weight: 1.2, ecoFact: ud('fact_bottle=%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%201%20%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B9%80%E0%B8%A7%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B9%88%E0%B8%AD%E0%B8%A2%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B8%A3%E0%B8%B2%E0%B8%A7%20450%20%E0%B8%9B%E0%B8%B5'.split('=')[1]) },
   can: { name: ud('item_can=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%9B%E0%B9%8B%E0%B8%AD%E0%B8%87%E0%B8%AD%E0%B8%A5%E0%B8%B9%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1'.split('=')[1]), icon: cp(0x1F96B), type: 'recyclable', points: 15, weight: 1.5, ecoFact: ud('fact_can=%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B8%AD%E0%B8%A5%E0%B8%B9%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A2%E0%B8%B1%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B1%E0%B8%87%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%93%2095%25'.split('=')[1]) },
-  newspaper: { name: ud('item_newspaper=%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B8%9E%E0%B8%B4%E0%B8%A1%E0%B8%9E%E0%B9%8C'.split('=')[1]), icon: cp(0x1F4F0), type: 'recyclable', points: 5, weight: 1.1, ecoFact: ud('fact_paper=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%94%E0%B8%B2%E0%B8%A9%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%93%205%E2%80%937%20%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%99%E0%B9%80%E0%B8%AA%E0%B9%89%E0%B8%99%E0%B9%83%E0%B8%A2%E0%B8%AA%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B9%80%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B9%84%E0%B8%9B'.split('=')[1]) },
-  apple: { name: ud('item_apple=%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B9%81%E0%B8%AD%E0%B8%9B%E0%B9%80%E0%B8%9B%E0%B8%B4%E0%B8%A5'.split('=')[1]), icon: cp(0x1F34E), type: 'organic', points: 5, weight: 1.0, ecoFact: ud('fact_food=%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%E0%B8%9B%E0%B8%B8%E0%B9%8B%E0%B8%A2%E0%B9%84%E0%B8%94%E0%B9%89%20%E0%B8%A5%E0%B8%94%E0%B8%81%E0%B9%8A%E0%B8%B2%E0%B8%8B%E0%B8%A1%E0%B8%B5%E0%B9%80%E0%B8%97%E0%B8%99%E0%B8%88%E0%B8%B2%E0%B8%81%E0%B8%AB%E0%B8%A5%E0%B8%B8%E0%B8%A1%E0%B8%9D%E0%B8%B1%E0%B8%87%E0%B8%81%E0%B8%A5%E0%B8%9A'.split('=')[1]) },
+  newspaper: { name: ud('item_newspaper=%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B8%9E%E0%B8%B4%E0%B8%A1%E0%B8%9E%E0%B9%8C'.split('=')[1]), icon: cp(0x1F4F0), type: 'recyclable', points: 5, weight: 1.1, ecoFact: ud('fact_paper=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%94%E0%B8%B2%E0%B8%A9%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%93%205%E2%80%937%20%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%99%E0%B9%80%E0%B8%AA%E0%B9%89%E0%B8%99%E0%B9%83%E0%B8%A2%E0%B8%AA%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B9%80%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B9%84%E0%B8%99'.split('=')[1]) },
+  apple: { name: ud('item_apple=%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B9%81%E0%B8%AD%E0%B8%9B%E0%B9%80%E0%B8%9B%E0%B8%B4%E0%B8%A5'.split('=')[1]), icon: cp(0x1F34E), type: 'organic', points: 5, weight: 1.0, ecoFact: ud('fact_food=%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%E0%B8%9B%E0%B8%B8%E0%B9%8B%E0%B8%A2%E0%B9%84%E0%B8%94%E0%B9%89%20%E0%B8%A5%E0%B8%94%E0%B8%81%E0%B9%8A%E0%B8%B2%E0%B8%8B%E0%B8%A1%E0%B8%B5%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%99%E0%B8%88%E0%B8%B2%E0%B8%81%E0%B8%AB%E0%B8%A5%E0%B8%B8%E0%B8%A1%E0%B8%9D%E0%B8%B1%E0%B8%87%E0%B8%81%E0%B8%A5%E0%B8%9A'.split('=')[1]) },
   shoe: { name: ud('item_shoe=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B9%80%E0%B8%81%E0%B9%88%E0%B8%B2'.split('=')[1]), icon: cp(0x1F45F), type: 'general', points: 2, weight: 2.0, ecoFact: ud('fact_shoe=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B8%8A%E0%B8%99%E0%B8%B4%E0%B8%94%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%A2%E0%B8%B2%E0%B8%81%20%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%99%E0%B8%B2%E0%B8%99%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%8B%E0%B9%88%E0%B8%AD%E0%B8%A1%E0%B9%81%E0%B8%8B%E0%B8%A1'.split('=')[1]) },
   cup: { name: ud('item_cup=%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81'.split('=')[1]), icon: cp(0x1F964), type: 'general', points: 8, weight: 1.3, ecoFact: ud('fact_cup=%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7%E0%B8%AA%E0%B9%88%E0%B8%A7%E0%B8%99%E0%B8%95%E0%B8%B1%E0%B8%A7%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B8%A5%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B9%80%E0%B8%94%E0%B8%B5%E0%B8%A2%E0%B8%A7%E0%B8%97%E0%B8%B4%E0%B9%89%E0%B8%87'.split('=')[1]) },
   battery: { name: ud('item_battery=%E0%B9%81%E0%B8%9A%E0%B8%95%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B8%B5%E0%B9%88'.split('=')[1]), icon: cp(0x1F50B), type: 'hazardous', points: 25, weight: 2.5, ecoFact: ud('fact_battery=%E0%B9%81%E0%B8%9A%E0%B8%95%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B8%B5%E0%B9%88%E0%B8%A1%E0%B8%B5%E0%B8%AA%E0%B8%B2%E0%B8%A3%E0%B8%9E%E0%B8%B4%E0%B8%A9%20%E0%B8%95%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B4%E0%B9%89%E0%B8%87%E0%B8%88%E0%B8%B8%E0%B8%94%E0%B8%A3%E0%B8%B1%E0%B8%9A%E0%B8%82%E0%B8%A2%E0%B8%B0%E0%B8%AD%E0%B8%B1%E0%B8%99%E0%B8%95%E0%B8%A3%E0%B8%B2%E0%B8%A2%E0%B9%80%E0%B8%97%E0%B9%88%E0%B8%B2%E0%B8%99%E0%B8%B1%E0%B9%89%E0%B8%99'.split('=')[1]) },
   banana: { name: ud('item_banana=%E0%B9%80%E0%B8%9B%E0%B8%A5%E0%B8%B7%E0%B8%AD%E0%B8%81%E0%B8%81%E0%B8%A5%E0%B9%89%E0%B8%A7%E0%B8%A2'.split('=')[1]), icon: cp(0x1F34C), type: 'organic', points: 4, weight: 1.0, ecoFact: ud('fact_banana=%E0%B9%80%E0%B8%9B%E0%B8%A5%E0%B8%B7%E0%B8%AD%E0%B8%81%E0%B8%9C%E0%B8%A5%E0%B9%84%E0%B8%A1%E0%B9%89%E0%B8%A2%E0%B9%88%E0%B8%AD%E0%B8%A2%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B9%84%E0%B8%94%E0%B9%89%20%E0%B9%80%E0%B8%AB%E0%B8%A1%E0%B8%B2%E0%B8%B0%E0%B8%81%E0%B8%B1%E0%B8%9A%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%E0%B8%9B%E0%B8%B8%E0%B9%8B%E0%B8%A2'.split('=')[1]) },
-  bag: { name: ud('item_bag=%E0%B8%96%E0%B8%B8%E0%B8%87%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81'.split('=')[1]), icon: cp(0x1F6CD), type: 'general', points: 7, weight: 1.2, ecoFact: ud('fact_bag=%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%96%E0%B8%B8%E0%B8%87%E0%B8%9C%E0%B9%89%E0%B8%B2%E0%B9%81%E0%B8%97%E0%B8%99%E0%B9%80%E0%B8%9E%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%A5%E0%B8%94%E0%B8%82%E0%B8%A2%E0%B8%B0%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%E0%B9%83%E0%B8%99%E0%B8%97%E0%B8%B0%E0%B9%80%E0%B8%A5'.split('=')[1]) },
+  bag: { name: ud('item_bag=%E0%B8%96%E0%B8%B8%E0%B8%87%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81'.split('=')[1]), icon: cp(0x1F6CD), type: 'general', points: 7, weight: 1.2, ecoFact: ud('fact_bag=%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%96%E0%B8%B8%E0%B8%87%E0%B8%9C%E0%B9%89%E0%B8%B2%E0%B9%81%E0%B8%95%E0%B8%99%E0%B9%80%E0%B8%9E%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%A5%E0%B8%94%E0%B8%82%E0%B8%A2%E0%B8%B0%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%E0%B9%83%E0%B8%99%E0%B8%97%E0%B8%B0%E0%B9%80%E0%B8%A5'.split('=')[1]) },
   boot: { name: ud('item_boot=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B8%9A%E0%B8%B9%E0%B8%97'.split('=')[1]), icon: cp(0x1F97E), type: 'general', points: 3, weight: 2.2, ecoFact: ud('fact_boot=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B8%9A%E0%B8%B9%E0%B8%97%E0%B8%A1%E0%B8%B1%E0%B8%81%E0%B8%97%E0%B8%B3%E0%B8%88%E0%B8%B2%E0%B8%81%E0%B8%A2%E0%B8%B2%E0%B8%87%2F%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%20%E0%B8%A2%E0%B9%88%E0%B8%AD%E0%B8%A2%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B8%A2%E0%B8%B2%E0%B8%81'.split('=')[1]) },
   champagne: { name: ud('item_champagne=%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7'.split('=')[1]), icon: cp(0x1F37E), type: 'recyclable', points: 12, weight: 1.8, ecoFact: ud('fact_glass=%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B9%84%E0%B8%94%E0%B9%89%20100%25%20%E0%B9%82%E0%B8%94%E0%B8%A2%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%AA%E0%B8%B9%E0%B8%8D%E0%B9%80%E0%B8%AA%E0%B8%B5%E0%B8%A2%E0%B8%84%E0%B8%B8%E0%B8%93%E0%B8%A0%E0%B8%B2%E0%B8%9E'.split('=')[1]) },
   treasure: { name: ud('item_treasure=%E0%B8%AB%E0%B8%B5%E0%B8%9A%E0%B8%AA%E0%B8%A1%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4'.split('=')[1]), icon: cp(0x1F4B0), type: 'recyclable', points: 500, weight: 3.0, ecoFact: ud('fact_treasure=%E0%B8%9E%E0%B8%9A%E0%B8%AA%E0%B8%A1%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B9%83%E0%B8%95%E0%B9%89%E0%B8%97%E0%B8%B0%E0%B9%80%E0%B8%A5%20%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%80%E0%B8%99%E0%B9%89%E0%B8%99%E0%B8%99%E0%B8%B3%E0%B9%84%E0%B8%9B%E0%B8%AA%E0%B9%88%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5'.split('=')[1]) },
@@ -297,7 +298,8 @@ const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number,
     
         setScore(Math.max(0, newScore));
         setItems(prevItems => prevItems.filter(item => item.uid !== itemToSort.uid));
-        setTimeout(() => setFeedback(null), 1200);
+        // INCREASED TIMEOUT: Match the new slower animation
+        setTimeout(() => setFeedback(null), 2500);
         
         // Unify completion check. `items.length` is checked before the state update, so `1` is the last item.
         if (items.length === 1) {
@@ -305,7 +307,7 @@ const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number,
             setTimeout(() => {
                 // Use the locally tracked values to avoid state lag
                 onComplete(Math.round(newScore), finalSortedCorrectly);
-            }, 1300); // Wait for the final feedback animation to be visible.
+            }, 2600); // Wait for the final feedback animation to be visible.
         }
     };
     
@@ -448,7 +450,7 @@ const SortingGame: FC<{ collected: CollectedTrash[], onComplete: (score: number,
                     <div className="sorting-progress-bar-fill" style={{ width: `${(sortedCount / totalItems) * 100}%`}}></div>
                     <span className="progress-bar-text">{sortedCount} / {totalItems}</span>
                 </div>
-                <div className="sorting-score">{ud('score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%3A'.split('=')[1])} {Math.round(score)}</div>
+                <div className="sorting-score">{ud('score=%E0%B8%84%E0%B8%B0%E0%B9%81%E0%B8%99%E0%B8%99%E0%B8%A3%E0%B8%A7%E0%B8%A1%3A'.split('=')[1])} {Math.round(score)}</div>
             </div>
             
             <div className="eco-fact-box">
@@ -619,7 +621,8 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             const id = isTreasure ? 'treasure' : trashTypes[Math.floor(Math.random() * trashTypes.length)];
             el.className = isTreasure ? 'world-object collectible-trash collectible-treasure-rare' : 'world-object collectible-trash';
             el.textContent = TRASH_DATA[id].icon;
-            const depth = 80 + Math.random() * (window.innerHeight * 0.6);
+            // Updated depth calculation to keep trash higher up and away from bottom controls
+            const depth = 80 + Math.random() * (window.innerHeight * 0.45); 
             obj = { ...obj, id, x: Math.random() * (WORLD_WIDTH - 200) + 100, y: waterLine + depth, baseY: depth, sway: 6 + Math.random() * 10, vx: (Math.random() - 0.5) * 4, vy: 0, rot: Math.random() * 360, vRot: (Math.random() - 0.5) * 10 };
         }
         
@@ -631,7 +634,12 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
     useEffect(() => {
         if (isPaused) return;
 
-        const DAY_CYCLE_KEYFRAMES = {
+        const DAY_CYCLE_KEYFRAMES: {
+            top: [number, string][];
+            bottom: [number, string][];
+            sun: [number, number][];
+            moon: [number, number][];
+        } = {
             top:    [[0, '#020617'], [0.22, '#020617'], [0.28, '#1e293b'], [0.35, '#38bdf8'], [0.72, '#38bdf8'], [0.78, '#0b1d3a'], [0.85, '#020617'], [1, '#020617']],
             bottom: [[0, '#0b1d3a'], [0.22, '#0b1d3a'], [0.28, '#60a5fa'], [0.35, '#bfe4ff'], [0.72, '#bfe4ff'], [0.78, '#1e293b'], [0.85, '#0b1d3a'], [1, '#0b1d3a']],
             sun:    [[0, 0], [0.24, 0], [0.28, 1], [0.72, 1], [0.76, 0], [1, 0]],
@@ -1018,37 +1026,6 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
 
             const t = tMs/1000;
 
-            // --- God Rays (disabled) ---
-            /*
-            const sunPos = skyStateRef.current.sunVis > 0.1 ? skyStateRef.current.sunX : skyStateRef.current.moonX;
-            const sunStrength = Math.max(skyStateRef.current.sunVis, skyStateRef.current.moonVis * 0.6);
-            if (sunStrength > 0.2) {
-                ctx.save();
-                ctx.globalCompositeOperation = 'overlay';
-                const rayCount = 12;
-                for (let i = 0; i < rayCount; i++) {
-                    const rayX = sunPos + (i - rayCount / 2) * 150 + Math.sin(t * 0.1 + i) * 100;
-                    const rayW = 40 + Math.sin(t * 0.2 + i * 2) * 20;
-                    const rayAngle = (rayX - w/2) * 0.0005;
-
-                    const grd = ctx.createLinearGradient(rayX, waterLine, rayX + Math.sin(rayAngle)*h, waterLine + h);
-                    const alpha = (0.04 + Math.pow(Math.sin(t * 0.3 + i * 1.5) * 0.5 + 0.5, 4) * 0.08) * sunStrength;
-                    grd.addColorStop(0, `rgba(255, 255, 220, ${alpha})`);
-                    grd.addColorStop(0.8, `rgba(180, 220, 255, 0)`);
-
-                    ctx.fillStyle = grd;
-                    ctx.beginPath();
-                    ctx.moveTo(rayX - rayW, waterLine);
-                    ctx.lineTo(rayX + rayW, waterLine);
-                    ctx.lineTo(rayX + rayW + Math.sin(rayAngle) * h, h);
-                    ctx.lineTo(rayX - rayW + Math.sin(rayAngle) * h, h);
-                    ctx.closePath();
-                    ctx.fill();
-                }
-                ctx.restore();
-            }
-            */
-
             const glaze = ctx.createLinearGradient(0, waterLine-8, 0, waterLine+36);
             glaze.addColorStop(0, `rgba(255,255,255,${0.18 * sunAmount})`);
             glaze.addColorStop(0.5, `rgba(255,255,255,${0.10 * sunAmount})`);
@@ -1419,7 +1396,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             const hookActive = hookState.current.status !== 'idle';
             const targetX = hookActive ? boatPos.current.x : Math.max(100, Math.min(window.innerWidth - 100, boatPos.current.targetX));
             // Slow down boat movement further for easier mobile control
-            const follow = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ? 0.015 : 0.04;
+            const follow = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ? 0.008 : 0.015; // Reduced from 0.015 / 0.04
             boatPos.current.x += (targetX - boatPos.current.x) * follow;
             const boatScreenX = boatPos.current.x;
             const scrollRatio = boatScreenX / window.innerWidth;
@@ -1735,7 +1712,9 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                     const seabedY = getSeabedY(obj.x);
                     const phase = (time/900) + obj.uid*2.1;
                     let targetY = surf + (obj.baseY ?? 140) + Math.sin(phase) * (obj.sway ?? 9);
-                    targetY = Math.max(surf + 60, Math.min(seabedY - 40, targetY));
+                    // Add safe zone for controls
+                    const safeBottom = window.innerHeight - 140; // Avoid bottom 140px
+                    targetY = Math.max(surf + 60, Math.min(Math.min(seabedY - 40, safeBottom), targetY));
                     obj.y += (targetY - obj.y) * 0.18;
 
                     const windVX = Math.cos(windRef.current.dir) * (15 * windRef.current.speed);
@@ -1825,8 +1804,8 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
     const clampX = (x:number) => Math.max(100, Math.min(window.innerWidth - 100, x));
     const mobileMove = useRef<{ dir: -1|0|1; vx: number; raf: number|0 }>({ dir: 0, vx: 0, raf: 0 });
     const mobileStep = () => {
-        const st = mobileMove.current; const accel = 0.28; const damping = 0.88;
-        const maxV = Math.max(2.2, window.innerWidth * 0.0035);
+        const st = mobileMove.current; const accel = 0.15; const damping = 0.88; // accel was 0.28
+        const maxV = Math.max(1.5, window.innerWidth * 0.002); // maxV was higher (0.0035)
         if (st.dir !== 0) st.vx = Math.max(-maxV, Math.min(maxV, st.vx + st.dir * accel));
         else st.vx *= damping;
         if (Math.abs(st.vx) < 0.05 && st.dir === 0) { st.vx = 0; st.raf = 0; return; }
@@ -1901,7 +1880,7 @@ const BoatSVG = React.forwardRef<SVGSVGElement, { customization: PlayerProfile['
             <path id="ship-cabin" d="M 60 70 L 140 70 L 130 40 L 70 40 Z" fill="#a0b0c0" />
         </g>
         <g id="ship-flag">
-            <line x1="140" y1="70" x2="140" y2="20" stroke="#506070" strokeWidth="3" />
+            <line x1="140" y1="70" x2="140" y2="20" stroke="#506070" stroke-width="3" />
             <path id="flag-canvas" d="M 140 20 C 155 15, 170 25, 185 20 L 185 40 C 170 45, 155 35, 140 40 Z" fill={customization.flagId.includes('wave') ? '#38bdf8' : '#f0f8ff'}/>
         </g>
     </svg>
@@ -1933,6 +1912,22 @@ const HUD: FC<{ collected: number, maxCapacity: number, onSortNow?: () => void, 
     </div>
   </div>
 );
+
+interface ResultsScreenProps {
+    stats: {
+        score: number;
+        collected: number;
+        sortedCorrectly: number;
+        incorrect: number;
+    };
+    gains: {
+        xp: number;
+        coins: number;
+        coralFragments: number;
+    };
+    isVisible: boolean;
+}
+
 const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
     <div className={`game-overlay ${isVisible ? 'visible' : ''}`}>
         <div className="popup-dialog">
@@ -1982,24 +1977,3 @@ const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
 
 const root = createRoot(document.getElementById('root')!);
 root.render(<Game />);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
