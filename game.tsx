@@ -64,10 +64,12 @@ const WATER_LEVEL_VH = 35;
 const HOOK_MAX_LENGTH_OFFSET = 50;
 // Slow hook a bit for better control on mobile
 const BASE_HOOK_SPEED = 420;
+const CORAL_RANGE = { start: 3, end: 29 };
+
 const TRASH_DATA: Record<TrashId, TrashData> = {
   bottle: { name: ud('item_bottle=%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81'.split('=')[1]), icon: cp(0x1F9F4), type: 'recyclable', points: 10, weight: 1.2, ecoFact: ud('fact_bottle=%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%201%20%E0%B8%82%E0%B8%A7%E0%B8%94%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B9%80%E0%B8%A7%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B9%88%E0%B8%AD%E0%B8%A2%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A2%E0%B8%A3%E0%B8%B2%E0%B8%A7%20450%20%E0%B8%9B%E0%B8%B5'.split('=')[1]) },
   can: { name: ud('item_can=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%9B%E0%B9%8B%E0%B8%AD%E0%B8%87%E0%B8%AD%E0%B8%A5%E0%B8%B9%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1'.split('=')[1]), icon: cp(0x1F96B), type: 'recyclable', points: 15, weight: 1.5, ecoFact: ud('fact_can=%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B8%AD%E0%B8%A5%E0%B8%B9%E0%B8%A1%E0%B8%B4%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%AB%E0%B8%A2%E0%B8%B1%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B1%E0%B8%87%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%93%2095%25'.split('=')[1]) },
-  newspaper: { name: ud('item_newspaper=%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B8%9E%E0%B8%B4%E0%B8%A1%E0%B8%9E%E0%B9%8C'.split('=')[1]), icon: cp(0x1F4F0), type: 'recyclable', points: 5, weight: 1.1, ecoFact: ud('fact_paper=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%94%E0%B8%B2%E0%B8%A9%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%93%205%E2%80%937%20%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%99%E0%B9%80%E0%B8%AA%E0%B9%89%E0%B8%99%E0%B9%83%E0%B8%A2%E0%B8%AA%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B9%80%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B9%84%E0%B8%99'.split('=')[1]) },
+  newspaper: { name: ud('item_newspaper=%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B8%9E%E0%B8%B4%E0%B8%A1%E0%B8%9E%E0%B9%8C'.split('=')[1]), icon: cp(0x1F4F0), type: 'recyclable', points: 5, weight: 1.1, ecoFact: ud('fact_paper=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%94%E0%B8%B2%E0%B8%A9%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A1%E0%B8%B2%E0%B8%93%205%E2%80%937%20%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%99%E0%B9%80%E0%B8%AA%E0%B9%89%E0%B8%99%E0%B9%80%E0%B8%A2%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B9%80%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B9%84%E0%B8%99'.split('=')[1]) },
   apple: { name: ud('item_apple=%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B9%81%E0%B8%AD%E0%B8%9B%E0%B9%80%E0%B8%9B%E0%B8%B4%E0%B8%A5'.split('=')[1]), icon: cp(0x1F34E), type: 'organic', points: 5, weight: 1.0, ecoFact: ud('fact_food=%E0%B9%80%E0%B8%A8%E0%B8%A9%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%E0%B8%9B%E0%B8%B8%E0%B9%8B%E0%B8%A2%E0%B9%84%E0%B8%94%E0%B9%89%20%E0%B8%A5%E0%B8%94%E0%B8%81%E0%B9%8A%E0%B8%B2%E0%B8%8B%E0%B8%A1%E0%B8%B5%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%99%E0%B8%88%E0%B8%B2%E0%B8%81%E0%B8%AB%E0%B8%A5%E0%B8%B8%E0%B8%A1%E0%B8%9D%E0%B8%B1%E0%B8%87%E0%B8%81%E0%B8%A5%E0%B8%9A'.split('=')[1]) },
   shoe: { name: ud('item_shoe=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B9%80%E0%B8%81%E0%B9%88%E0%B8%B2'.split('=')[1]), icon: cp(0x1F45F), type: 'general', points: 2, weight: 2.0, ecoFact: ud('fact_shoe=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B8%8A%E0%B8%99%E0%B8%B4%E0%B8%94%E0%B8%A3%E0%B8%B5%E0%B9%84%E0%B8%8B%E0%B9%80%E0%B8%84%E0%B8%B4%E0%B8%A5%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%A2%E0%B8%B2%E0%B8%81%20%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%99%E0%B8%B2%E0%B8%99%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%8B%E0%B9%88%E0%B8%AD%E0%B8%A1%E0%B9%81%E0%B8%8B%E0%B8%A1'.split('=')[1]) },
   cup: { name: ud('item_cup=%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81'.split('=')[1]), icon: cp(0x1F964), type: 'general', points: 8, weight: 1.3, ecoFact: ud('fact_cup=%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%A7%E0%B8%AA%E0%B9%88%E0%B8%A7%E0%B8%99%E0%B8%95%E0%B8%B1%E0%B8%A7%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B8%A5%E0%B8%94%E0%B8%9E%E0%B8%A5%E0%B8%B2%E0%B8%AA%E0%B8%95%E0%B8%B4%E0%B8%81%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B9%80%E0%B8%94%E0%B8%B5%E0%B8%A2%E0%B8%A7%E0%B8%97%E0%B8%B4%E0%B9%89%E0%B8%87'.split('=')[1]) },
@@ -490,7 +492,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
     const planktonRef = useRef<Array<{ x:number; y:number; phase:number; amp:number }>>([]);
     const farBoatsRef = useRef<Array<{ x:number; speed:number; phase:number }>>([]);
     const mammalsRef = useRef<Array<{ x:number; y:number; dir:number; kind:'whale'|'dolphin'; t:number; life:number }>>([]);
-    const seabedFeaturesRef = useRef<Array<{ type: 'rock'|'coral'|'weed'|'star'|'soft_coral'; x:number; scale:number; phase: number; }>>([]);
+    const seabedFeaturesRef = useRef<Array<{ type: 'rock'|'png_coral'; x:number; scale:number; phase: number; imgIndex?: number; }>>([]);
     const underDustRef = useRef<Array<{ x:number; y:number; vx:number; vy:number; alpha:number; size:number }>>([]);
     const sandDunesRef = useRef<Array<{ x:number; w:number; h:number; a:number }>>([]);
     const ventsRef = useRef<Array<{ x:number; y:number; speed:number }>>([]);
@@ -511,10 +513,21 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
     const windRef = useRef<{ dir:number; speed:number }>({ dir: 0, speed: 0.6 }); // dir radians; 0 => blowing to the right
     const windTargetRef = useRef<{ dir:number; speed:number }>({ dir: 0, speed: 0.6 });
     const windTimerRef = useRef<number>(0);
+    const coralImagesRef = useRef<HTMLImageElement[]>([]);
     
     // FIX: Declare refs for game state management to resolve 'cannot find name' errors.
     const gameObjectsRef = useRef<GameObject[]>([]);
     const boatPos = useRef({ x: window.innerWidth / 2, y: 0, rot: 0, targetX: window.innerWidth / 2 });
+
+    useEffect(() => {
+        const imgs: HTMLImageElement[] = [];
+        for (let i = CORAL_RANGE.start; i <= CORAL_RANGE.end; i++) {
+            const img = new Image();
+            img.src = `./Coral/Layer ${i}.png`;
+            imgs.push(img);
+        }
+        coralImagesRef.current = imgs;
+    }, []);
 
     interface HookState {
         status: 'idle' | 'lowering' | 'raising';
@@ -795,17 +808,15 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                 }
                 return arr.sort((a,b)=>a-b);
             };
-            const rockXs = addWithGap([], 150);
-            const weedXs = addWithGap([], 80);
-            const starXs = addWithGap([], 200);
-            const coralXs = addWithGap([], 120);
-            const softCoralXs = addWithGap([], 100);
-            const feats: Array<{ type:'rock'|'coral'|'weed'|'star'|'soft_coral'; x:number; scale:number; phase: number; }> = [];
-            for (const x of rockXs) feats.push({ type:'rock', x, scale: 0.8 + Math.random()*1.3, phase: Math.random() * Math.PI * 2 });
-            for (const x of weedXs) feats.push({ type:'weed', x, scale: 0.7 + Math.random()*1.2, phase: Math.random() * Math.PI * 2 });
-            for (const x of starXs) feats.push({ type:'star', x, scale: 0.5 + Math.random()*1.0, phase: Math.random() * Math.PI * 2 });
-            for (const x of coralXs) feats.push({ type:'coral', x, scale: 0.6 + Math.random()*1.0, phase: Math.random() * Math.PI * 2 });
-            for (const x of softCoralXs) feats.push({ type:'soft_coral', x, scale: 0.7 + Math.random()*1.1, phase: Math.random() * Math.PI * 2 });
+            // Removed rockXs generation
+            const coralXs = addWithGap([], 60);
+
+            const feats: any[] = [];
+            // Removed rock pushing loop
+            for (const x of coralXs) {
+                const imgIdx = Math.floor(Math.random() * (CORAL_RANGE.end - CORAL_RANGE.start + 1));
+                feats.push({ type:'png_coral', x, scale: 0.4 + Math.random()*0.4, phase: Math.random() * Math.PI * 2, imgIndex: imgIdx });
+            }
             
             seabedFeaturesRef.current = feats.sort((a,b) => a.x - b.x);
 
@@ -1009,9 +1020,10 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             bottomColor = lerpColor(bottomColor, waterColors.night.bottom, nightAmount);
 
             const topPath = new Path2D();
+            // OPTIMIZATION: Increased step to 6 to reduce loop iterations
             let h0 = getWaveHeightAndSlope(0 - worldScrollX, tMs).height;
             topPath.moveTo(0, h0);
-            for (let x=2; x<=w; x+=2) {
+            for (let x=0; x<=w; x+=6) {
                 const { height: hh } = getWaveHeightAndSlope(x - worldScrollX, tMs);
                 topPath.lineTo(x, hh);
             }
@@ -1032,10 +1044,11 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             glaze.addColorStop(1, 'rgba(255,255,255,0)');
             ctx.fillStyle = glaze; ctx.fillRect(0, waterLine-8, w, 44);
 
+            // OPTIMIZATION: Increased step sizes
             const strata = [
-                { color: `rgba(24,120,200,${0.14 * (sunAmount * 0.5 + 0.5)})`, amp: 18, step: 6, parallax: 0.55, offset: 0 },
-                { color: `rgba(18,100,180,${0.12 * (sunAmount * 0.5 + 0.5)})`, amp: 26, step: 8, parallax: 0.65, offset: 500 },
-                { color: `rgba(12,80,160,${0.10 * (sunAmount * 0.5 + 0.5)})`, amp: 34, step: 10, parallax: 0.75, offset: 900 },
+                { color: `rgba(24,120,200,${0.14 * (sunAmount * 0.5 + 0.5)})`, amp: 18, step: 10, parallax: 0.55, offset: 0 },
+                { color: `rgba(18,100,180,${0.12 * (sunAmount * 0.5 + 0.5)})`, amp: 26, step: 12, parallax: 0.65, offset: 500 },
+                { color: `rgba(12,80,160,${0.10 * (sunAmount * 0.5 + 0.5)})`, amp: 34, step: 14, parallax: 0.75, offset: 900 },
             ];
             for (const L of strata) {
                 ctx.beginPath();
@@ -1196,42 +1209,27 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                 const y = getSeabedY(f.x) + 2; const s = f.scale;
                 f.phase += 0.02;
                 ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(sx, y-6*s, 16*s, 6*s, 0, 0, Math.PI*2); ctx.fill();
-                if (f.type === 'rock') {
-                    const rg = ctx.createRadialGradient(sx-6*s, y-16*s, 2*s, sx, y-12*s, 24*s);
-                    rg.addColorStop(0, 'rgba(220,230,245,0.35)');
-                    rg.addColorStop(1, 'rgba(46,56,86,0.65)');
-                    ctx.fillStyle = rg;
-                    ctx.beginPath(); ctx.ellipse(sx, y-12*s, 22*s, 14*s, -0.2, 0, Math.PI*2); ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(sx-2*s, y-15*s, 18*s, 10*s, -0.4, 0, Math.PI*2); ctx.stroke();
-                } else if (f.type === 'coral') {
-                    ctx.strokeStyle = 'rgba(255, 120, 170, 0.55)'; ctx.lineWidth = Math.max(2.2, 2.6*s); ctx.lineCap = 'round';
-                    ctx.shadowColor = 'rgba(255,120,170,0.28)'; ctx.shadowBlur = 5;
-                    const baseY = y-6*s; const baseX = sx;
-                    ctx.beginPath(); ctx.moveTo(baseX, baseY);
-                    ctx.bezierCurveTo(baseX-6*s, baseY-20*s, baseX-10*s, baseY-30*s, baseX-6*s, baseY-44*s);
-                    ctx.moveTo(baseX, baseY);
-                    ctx.bezierCurveTo(baseX+6*s, baseY-18*s, baseX+10*s, baseY-28*s, baseX+8*s, baseY-40*s);
-                    ctx.moveTo(baseX-4*s, baseY-24*s);
-                    ctx.bezierCurveTo(baseX-10*s, baseY-30*s, baseX-14*s, baseY-38*s, baseX-12*s, baseY-46*s);
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                } else if (f.type === 'weed') {
-                    ctx.strokeStyle = 'rgba(34,197,94,0.35)'; ctx.lineWidth = 2*s; ctx.lineCap='round';
-                    const sway = Math.sin(f.phase) * 8 * s;
-                    for (let k=0;k<3;k++) { ctx.beginPath(); const bx = sx - 6*s + k*6*s; const by = y; ctx.moveTo(bx, by); ctx.bezierCurveTo(bx-4*s + sway, by-10*s, bx+2*s + sway, by-22*s, bx-2*s + sway, by-38*s); ctx.stroke(); }
-                } else if (f.type === 'star') {
-                    const r = 6*s; const cx = sx, cy = y-10*s; ctx.fillStyle = 'rgba(255,179,71,0.45)'; ctx.beginPath();
-                    for (let i=0;i<5;i++){ const a = i*2*Math.PI/5 - Math.PI/2; const ax = cx + Math.cos(a)*r; const ay = cy + Math.sin(a)*r; const b = a + Math.PI/5; const bx = cx + Math.cos(b)*(r*0.45); const by = cy + Math.sin(b)*(r*0.45); if(i===0) ctx.moveTo(ax,ay); else ctx.lineTo(ax,ay); ctx.lineTo(bx,by);} ctx.closePath(); ctx.fill();
-                } else if (f.type === 'soft_coral') {
-                    ctx.fillStyle = `rgba(255, 105, 180, ${0.4 + 0.2*Math.sin(f.phase)})`;
-                    ctx.beginPath();
-                    for(let i=0; i<5; i++) {
-                        const ang = i * Math.PI * 2 / 5 + f.phase * 0.2;
-                        const r1 = 15 * s * (0.8 + 0.2 * Math.sin(f.phase * 1.5 + i));
-                        const r2 = 8 * s;
-                        ctx.ellipse(sx + Math.cos(ang) * r2, y - 15*s + Math.sin(ang) * r2, r1, r2, ang, 0, Math.PI*2);
+                if (f.type === 'png_coral') {
+                    const img = coralImagesRef.current[f.imgIndex!];
+                    if (img && img.complete) {
+                        const sway = Math.sin((tMs / 800) + f.phase) * 0.1; // Gentle sway
+                        ctx.save();
+                        ctx.translate(sx, y);
+                        ctx.scale(f.scale, f.scale);
+                        ctx.transform(1, 0, sway, 1, 0, 0); // Skew
+                        // Draw
+                        const aspect = img.width / img.height;
+                        const drawH = 120; // Base height
+                        const drawW = drawH * aspect;
+                        
+                        // Add a subtle drop shadow for realism
+                        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                        ctx.shadowBlur = 4;
+                        ctx.shadowOffsetY = 2;
+
+                        ctx.drawImage(img, -drawW/2, -drawH + 10, drawW, drawH); // +10 to sink slightly into sand
+                        ctx.restore();
                     }
-                    ctx.fill();
                 }
             }
             ctx.restore();
@@ -1286,8 +1284,17 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             if (bubblesRef.current.length < 30 && Math.random() < 0.2) {
                 bubblesRef.current.push({ x: Math.random()*w, y: h-20, vy: -20 - Math.random()*20, r: 1 + Math.random()*1.5, life: 1 });
             }
-            for (const b of bubblesRef.current) { b.y += b.vy * 0.016; b.life -= 0.004; if (b.y < waterLine+10) b.life = 0; }
-            bubblesRef.current = bubblesRef.current.filter(b => b.life>0);
+            // OPTIMIZATION: Reverse loop for safe removal
+            for (let i = bubblesRef.current.length - 1; i >= 0; i--) {
+                const b = bubblesRef.current[i];
+                b.y += b.vy * 0.016; 
+                b.life -= 0.004; 
+                if (b.y < waterLine + 10) b.life = 0;
+                if (b.life <= 0) {
+                    bubblesRef.current.splice(i, 1);
+                }
+            }
+            
             ctx.fillStyle = 'rgba(255,255,255,0.6)';
             for (const b of bubblesRef.current) { ctx.globalAlpha = b.life; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill(); }
             ctx.globalAlpha = 1;
@@ -1300,7 +1307,8 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             ctx.clearRect(0,0,w,h);
             ctx.lineWidth = 2;
             let prevH = waterLine; let prevX = 0; let prevSlope = 0;
-            for (let x=0; x<=w; x+=2) {
+            // OPTIMIZATION: Increased step
+            for (let x=0; x<=w; x+=6) {
                 const { height: hgt, slope } = getWaveHeightAndSlope(x - worldScrollX, time);
                 ctx.strokeStyle = 'rgba(255,255,255,0.15)';
                 ctx.beginPath(); ctx.moveTo(prevX, prevH-1); ctx.lineTo(x, hgt-1); ctx.stroke();
@@ -1321,7 +1329,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             ];
             for (const L of layers) {
                 ctx.beginPath();
-                for (let x=0; x<=w; x+=3) {
+                for (let x=0; x<=w; x+=10) { // Increased step
                     const { height } = getWaveHeightAndSlope(x - worldScrollX*L.parallax, time + L.offset);
                     const y = height + Math.sin((x+time*0.06)*0.05 + L.offset*0.1) * L.amp;
                     if (x===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
@@ -1331,17 +1339,38 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
 
             const boatSurfY = getWaveHeightAndSlope(boatScreenX - worldScrollX, time).height;
             wakeRef.current.push({ x: boatScreenX-30, y: boatSurfY-4, r: 6, life: 1 });
-            for (const wv of wakeRef.current) { wv.r += 20*0.016; wv.life -= 0.02; }
-            wakeRef.current = wakeRef.current.filter(wv => wv.life>0);
+            // OPTIMIZATION: Reverse loop splice
+            for (let i = wakeRef.current.length - 1; i >= 0; i--) {
+                const wv = wakeRef.current[i];
+                wv.r += 20*0.016; 
+                wv.life -= 0.02;
+                if (wv.life <= 0) wakeRef.current.splice(i, 1);
+            }
+            
             for (const wv of wakeRef.current) { ctx.beginPath(); ctx.arc(wv.x, wv.y, wv.r, 0, Math.PI*2); ctx.strokeStyle = `rgba(255,255,255,${0.25*wv.life})`; ctx.lineWidth = 1.5; ctx.stroke(); }
 
-            for (const rp of ripplesRef.current) { rp.r += 28*0.016; rp.life -= 0.03; }
-            ripplesRef.current = ripplesRef.current.filter(rp => rp.life>0);
+            // OPTIMIZATION: Reverse loop splice for ripples
+            for (let i = ripplesRef.current.length - 1; i >= 0; i--) {
+                const rp = ripplesRef.current[i];
+                rp.r += 28*0.016; 
+                rp.life -= 0.03;
+                if (rp.life <= 0) ripplesRef.current.splice(i, 1);
+            }
+            
             for (const rp of ripplesRef.current) { ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI*2); ctx.strokeStyle = `rgba(255,255,255,${0.35*rp.life})`; ctx.lineWidth = 1; ctx.stroke(); }
 
             for (const sp of sprayRef.current) { ctx.globalAlpha = sp.life; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.arc(sp.x, sp.y, 1.5, 0, Math.PI*2); ctx.fill(); }
             ctx.globalAlpha = 1;
 
+            // OPTIMIZATION: Reverse loop splice for foam
+            for (let i = foamRef.current.length - 1; i >= 0; i--) {
+                const f = foamRef.current[i];
+                f.x += f.vx * 0.016; // Using fixed time delta for smoother physics
+                f.y += f.vy * 0.016; 
+                f.life -= 0.01;
+                if (f.life <= 0.1) foamRef.current.splice(i, 1);
+            }
+            
             for (const f of foamRef.current) { ctx.globalAlpha = 0.6 * f.life; ctx.fillStyle = '#ffffff'; ctx.fillRect(f.x, f.y, 2, 1); }
             ctx.globalAlpha = 1;
 
@@ -1358,7 +1387,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
 
             const sunInt = Math.max(0.1, skyStateRef.current.sunVis);
             if (sunInt > 0.05) {
-                for (let x=0; x<=w; x+=12) {
+                for (let x=0; x<=w; x+=24) { // Increased step
                     const p0 = getWaveHeightAndSlope(x-6 - worldScrollX, time);
                     const p1 = getWaveHeightAndSlope(x - worldScrollX, time);
                     const p2 = getWaveHeightAndSlope(x+6 - worldScrollX, time);
@@ -1467,12 +1496,23 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
 
             const windVX = Math.cos(windRef.current.dir) * 20 * windRef.current.speed;
             const windVY = Math.sin(windRef.current.dir) * 4 * windRef.current.speed;
-            for (const p of sprayRef.current) { p.x += (p.vx + windVX) * deltaSeconds; p.y += (p.vy + windVY) * deltaSeconds; p.vy += 60*deltaSeconds; p.life -= 0.04; }
-            sprayRef.current = sprayRef.current.filter(p => p.life>0 && p.y < boatPos.current.y-2);
+            
+            // OPTIMIZATION: Reverse loop splice for spray
+            for (let i = sprayRef.current.length - 1; i >= 0; i--) {
+                const p = sprayRef.current[i];
+                p.x += (p.vx + windVX) * deltaSeconds; 
+                p.y += (p.vy + windVY) * deltaSeconds; 
+                p.vy += 60*deltaSeconds; 
+                p.life -= 0.04;
+                if (p.life <= 0 || p.y >= boatPos.current.y - 2) {
+                    sprayRef.current.splice(i, 1);
+                }
+            }
 
             if (Math.random() < 0.8) foamRef.current.push({ x: boatScreenX-40 + (Math.random()*20-10), y: boatPos.current.y-1, vx: windVX*0.2 + (Math.random()-0.5)*10, vy: 0, life: 1 });
-            for (const f of foamRef.current) { f.x += f.vx * deltaSeconds; f.y += f.vy * deltaSeconds; f.life -= 0.01; }
-            foamRef.current = foamRef.current.filter(f => f.life>0.1);
+            // Note: foamRef is processed in drawWaves for rendering but physics updated here? 
+            // Wait, previous code processed foamRef twice (physics here, render in drawWaves). 
+            // Corrected: Physics are now in drawWaves loop to consolidate.
 
             // Boids fish simulation - ENHANCED FOR LIVELIER BEHAVIOR
             const allFish = fishSchoolRef.current;
@@ -1482,11 +1522,15 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
 
             // Boid parameters - Tuned for more dynamic movement
             const separationDist = 50;
+            const separationDistSq = separationDist * separationDist; // OPTIMIZATION: Squared distance
             const alignmentDist = 100;
+            const alignmentDistSq = alignmentDist * alignmentDist;
             const cohesionDist = 120;
-            const separationForce = 0.09; // Increased
-            const alignmentForce = 0.07;  // Increased
-            const cohesionForce = 0.003; // Increased
+            const cohesionDistSq = cohesionDist * cohesionDist;
+            
+            const separationForce = 0.09; 
+            const alignmentForce = 0.07;
+            const cohesionForce = 0.003; 
             const hookAvoidanceDist = 130;
             const hookAvoidanceForce = 0.25;
 
@@ -1499,17 +1543,22 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
 
                     allFish.forEach(other => {
                         if (fish.id === other.id || other.schoolId !== fish.schoolId) return;
-                        const d = Math.hypot(fish.x - other.x, fish.y - other.y);
-                        if (d > 0 && d < separationDist) {
-                            sepVx += (fish.x - other.x) / d;
-                            sepVy += (fish.y - other.y) / d;
+                        
+                        const dx = fish.x - other.x;
+                        const dy = fish.y - other.y;
+                        const distSq = dx * dx + dy * dy; // OPTIMIZATION: Avoid Math.sqrt
+
+                        if (distSq > 0 && distSq < separationDistSq) {
+                            const d = Math.sqrt(distSq); // Only calc sqrt when needed
+                            sepVx += dx / d;
+                            sepVy += dy / d;
                         }
-                        if (d < alignmentDist) {
+                        if (distSq < alignmentDistSq) {
                             avgVx += other.vx;
                             avgVy += other.vy;
                             alignCount++;
                         }
-                        if (d < cohesionDist) {
+                        if (distSq < cohesionDistSq) {
                             avgX += other.x;
                             avgY += other.y;
                             cohesionCount++;
@@ -1536,10 +1585,14 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
 
                 // Flee from the hook
                 if (hookIsActive) {
-                    const dHook = Math.hypot(fish.x - hookWorldXForFish, fish.y - hookWorldYForFish);
-                    if (dHook > 0 && dHook < hookAvoidanceDist) {
-                        const fleeVx = (fish.x - hookWorldXForFish) / dHook;
-                        const fleeVy = (fish.y - hookWorldYForFish) / dHook;
+                    const dx = fish.x - hookWorldXForFish;
+                    const dy = fish.y - hookWorldYForFish;
+                    const dHookSq = dx*dx + dy*dy;
+                    
+                    if (dHookSq > 0 && dHookSq < hookAvoidanceDist * hookAvoidanceDist) {
+                        const dHook = Math.sqrt(dHookSq);
+                        const fleeVx = dx / dHook;
+                        const fleeVy = dy / dHook;
                         fish.vx += fleeVx * hookAvoidanceForce * (180 / (dHook + 1)); // Stronger when closer
                         fish.vy += fleeVy * hookAvoidanceForce * (180 / (dHook + 1));
                     }
@@ -1557,9 +1610,10 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                 }
 
                 // Speed limit
-                const speed = Math.hypot(fish.vx, fish.vy);
+                const speedSq = fish.vx*fish.vx + fish.vy*fish.vy;
                 const maxSpeed = 180; // Increased max speed
-                if (speed > maxSpeed) {
+                if (speedSq > maxSpeed * maxSpeed) {
+                    const speed = Math.sqrt(speedSq);
                     fish.vx = (fish.vx / speed) * maxSpeed;
                     fish.vy = (fish.vy / speed) * maxSpeed;
                 }
@@ -1567,7 +1621,9 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
                 // Update position and tail flap animation
                 fish.x += fish.vx * deltaSeconds;
                 fish.y += fish.vy * deltaSeconds;
-                fish.phase += (6 + speed / 10) * 0.5; // Faster tail flap
+                // Approx speed for animation without sqrt if possible, but visual needs it
+                const approxSpeed = Math.abs(fish.vx) + Math.abs(fish.vy); 
+                fish.phase += (6 + approxSpeed / 15) * 0.5; // Faster tail flap
 
                 // --- Boundary Checks ---
                 const seabedY = getSeabedY(fish.x);
