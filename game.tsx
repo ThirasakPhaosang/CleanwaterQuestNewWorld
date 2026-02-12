@@ -1093,7 +1093,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
             ctx.beginPath();
             ctx.moveTo(-60, h+20);
             for (let x=-60; x<=w+60; x+=10) {
-                const realX = x + worldScrollX*0.6;
+                const realX = x - worldScrollX*0.6;
                 const y = getSeabedY(realX);
                 ctx.lineTo(x, y);
             }
@@ -1236,7 +1236,7 @@ const CollectionGame: FC<{ profile: PlayerProfile, onCollectionComplete: (c: Col
 
             if(octopusRef.current) {
                 const octo = octopusRef.current;
-                const sx = octo.x - worldScrollX*0.6;
+                const sx = octo.x + worldScrollX*0.6;
                 ctx.save();
                 ctx.translate(sx, octo.y);
                 ctx.font = '40px sans-serif';
