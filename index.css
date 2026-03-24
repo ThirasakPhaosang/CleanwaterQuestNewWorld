@@ -1,15 +1,15 @@
 :root {
-  --primary-bg: #010410;
-  --secondary-bg: #0a142c;
-  --highlight-color: #00f6ff;
+  --primary-bg: #001220;
+  --secondary-bg: #003b59;
+  --highlight-color: #00d4ff;
   --text-color: #f0f8ff;
   --glow-color: rgba(0, 246, 255, 0.7);
   --glow-color-soft: rgba(0, 246, 255, 0.3);
   --glow-color-dark: rgba(0, 246, 255, 0.15);
   --highlight-glow: #7fffd4; /* Aquamarine for a brighter pop */
   /* New Thematic "Bioluminescent" color scheme for the transition */
-  --transition-color-deep: #081a3d;   /* Deep Teal/Blue */
-  --transition-color-light: #00c4cc; /* Vibrant Cyan */
+  --transition-color-deep: #001220;   /* Deep Teal/Blue */
+  --transition-color-light: #00d4ff; /* Vibrant Cyan */
 }
 
 * {
@@ -24,7 +24,7 @@ body {
   width: 100%;
   overflow: hidden;
   font-family: 'Poppins', sans-serif;
-  background-color: var(--primary-bg);
+  background: radial-gradient(circle at center, var(--secondary-bg) 0%, var(--primary-bg) 100%);
 }
 
 #app-container {
