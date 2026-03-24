@@ -2030,6 +2030,5 @@ const ResultsScreen: FC<ResultsScreenProps> = ({ stats, gains, isVisible }) => (
         </div>
     </div>
 );
-
 const root = createRoot(document.getElementById('root')!);
 root.render(<Game />);
