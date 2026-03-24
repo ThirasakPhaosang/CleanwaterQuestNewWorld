@@ -111,37 +111,30 @@
   overflow: hidden;
   --health-percent: 0%; /* Controlled by JS */
   background: 
-    radial-gradient(circle at 50% 80%, rgba(34,197,94, calc(var(--health-percent) / 100 * 0.5)), transparent 60%),
     linear-gradient(to top, rgba(20, 83, 45, calc(var(--health-percent) / 100 * 0.35)), transparent),
     linear-gradient(to top, #1e293b, #0f172a);
   transition: background 0.5s ease;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
 }
 
-/* Coral growth silhouettes (simple, tree-like forms) */
-#reef-visualization::before {
-  content: '';
-  position: absolute; left: 0; right: 0; bottom: -6%; height: 62%;
-  background:
-    radial-gradient(60% 80% at 12% 100%, rgba(34,197,94,.6) 0%, rgba(34,197,94,.0) 55%),
-    radial-gradient(60% 80% at 32% 100%, rgba(16,185,129,.7) 0%, rgba(16,185,129,.0) 55%),
-    radial-gradient(60% 80% at 52% 100%, rgba(59,130,246,.55) 0%, rgba(59,130,246,.0) 55%),
-    radial-gradient(60% 80% at 72% 100%, rgba(101,163,13,.6) 0%, rgba(101,163,13,.0) 55%),
-    radial-gradient(60% 80% at 92% 100%, rgba(34,197,94,.6) 0%, rgba(34,197,94,.0) 55%);
-  filter: blur(2px) saturate(1.2);
-  opacity: calc(var(--health-percent) / 100);
-  transition: opacity 0.5s ease;
+#reef-tree-svg {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
 }
 
-#reef-visualization::after {
-  content: '';
-  position: absolute; left: 0; right: 0; bottom: 0; height: 30%;
-  background:
-    radial-gradient(8px 6px at 10% 70%, rgba(255,255,255,.25) 0, transparent 60%),
-    radial-gradient(8px 6px at 18% 60%, rgba(255,255,255,.18) 0, transparent 60%),
-    radial-gradient(8px 6px at 40% 75%, rgba(255,255,255,.22) 0, transparent 60%),
-    radial-gradient(8px 6px at 66% 66%, rgba(255,255,255,.2) 0, transparent 60%),
-    radial-gradient(8px 6px at 82% 78%, rgba(255,255,255,.18) 0, transparent 60%);
-  opacity: calc(var(--health-percent) / 140);
+.reef-branch {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  transition: stroke-dashoffset 1s ease-out;
+}
+
+.reef-leaf {
+  transform: scale(0);
+  transform-origin: center;
+  transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .reef-contribution-area {
