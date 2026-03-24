@@ -43,6 +43,8 @@ export interface PlayerProfile {
     decalId: string; // Added decal
     trailId: string;
   };
+  aquariumFish: string[]; // Stores IDs of owned fish
+  fishSlots: number; // Maximum number of fish allowed
   privacy: {
     showOnLeaderboard: boolean;
   };
@@ -96,6 +98,8 @@ function createDefaultProfile(user: firebase.User): PlayerProfile {
             decalId: "none",
             trailId: "none" 
         },
+        aquariumFish: [],
+        fishSlots: 5,
         privacy: { showOnLeaderboard: true },
         updatedAt: Date.now()
     };
@@ -171,6 +175,14 @@ export function getPlayerProfile(user: firebase.User): PlayerProfile {
         }
         if (!profile.equippedTitle) {
             profile.equippedTitle = 'new_explorer';
+            needsSave = true;
+        }
+        if (!profile.aquariumFish) {
+            profile.aquariumFish = [];
+            needsSave = true;
+        }
+        if (profile.fishSlots === undefined) {
+            profile.fishSlots = 5;
             needsSave = true;
         }
 
