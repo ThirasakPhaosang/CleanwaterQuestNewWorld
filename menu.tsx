@@ -12,6 +12,7 @@ import { openLeaderboardModal } from './leaderboard';
 import { openRedeemModal } from './redeem';
 import audio from './audio';
 import { openSettingsModal } from './settings';
+import { FISH_DATA } from './aquarium';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAAXqmfSy_q_Suh4td5PeLz-ZsuICf-KwI",
@@ -183,6 +184,7 @@ if (canvas) {
     const ctx = canvas.getContext('2d');
     let particles: Particle[] = [];
     let fish: Fish[] = [];
+    let foods: Food[] = [];
     let orbitalButtons: OrbitalButton[] = [];
     let bubbles: Bubble[] = [];
     let sonarPings: SonarPing[] = [];
@@ -204,6 +206,7 @@ if (canvas) {
              const clickY = e.clientY - rect.top;
 
              sonarPings.push(new SonarPing(clickX, clickY));
+             foods.push(new Food(clickX, clickY));
         }
     });
 
@@ -242,6 +245,28 @@ if (canvas) {
 
 
     // --- Classes ---
+    class Food {
+      x: number; y: number; size: number; speedY: number; life: number;
+      constructor(x: number, y: number) {
+        this.x = x; this.y = y; this.size = 3 + Math.random() * 2;
+        this.speedY = 1 + Math.random() * 1;
+        this.life = 1;
+      }
+      update() {
+        this.y += this.speedY;
+        if (this.y > canvas.height) this.life = 0;
+      }
+      draw() {
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffcc00';
+        ctx.fill();
+        ctx.shadowColor = '#ffcc00';
+        ctx.shadowBlur = 5;
+      }
+    }
+
     class SonarPing {
       x: number; y: number; radius: number; maxRadius: number; speed: number; life: number;
       constructor(x: number, y: number) {
@@ -390,12 +415,22 @@ if (canvas) {
       stateTimer: number;
       direction: 'left' | 'right' = 'right';
       brightness: number;
+      image: HTMLImageElement | null = null;
+      imageLoaded: boolean = false;
 
-      constructor() {
+      constructor(imageSrc?: string) {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.size = 15 + Math.random() * 10;
         this.text = ['🐠', '🐟', '🐡'][Math.floor(Math.random() * 3)];
+        
+        if (imageSrc) {
+            this.size = 15 + Math.random() * 10; // Make image fish smaller
+            this.image = new Image();
+            this.image.src = imageSrc;
+            this.image.onload = () => { this.imageLoaded = true; };
+        }
+
         this.speedX = 0;
         this.speedY = 0;
         this.targetSpeedX = 0;
@@ -413,6 +448,31 @@ if (canvas) {
 
       updateState() {
           const isLongPress = mouse.isDown && (Date.now() - mouse.downStartTime > 250);
+
+          let nearestFood: Food | null = null;
+          let minDist = Infinity;
+          foods.forEach(food => {
+              const dx = food.x - this.x;
+              const dy = food.y - this.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < minDist) {
+                  minDist = dist;
+                  nearestFood = food;
+              }
+          });
+
+          if (nearestFood && minDist < 300) {
+              this.state = 'attracted';
+              const dx = (nearestFood as Food).x - this.x;
+              const dy = (nearestFood as Food).y - this.y;
+              if (minDist > this.size) {
+                  this.setTargetSpeed(dx / minDist * 3, dy / minDist * 3);
+              } else {
+                  (nearestFood as Food).life = 0; // Eat food
+                  this.setTargetSpeed(0, 0);
+              }
+              return;
+          }
 
           if (isLongPress) {
               this.state = 'attracted';
@@ -484,7 +544,6 @@ if (canvas) {
 
       draw() {
           if (!ctx) return;
-          ctx.font = `${this.size}px sans-serif`;
           ctx.save();
           ctx.translate(this.x, this.y);
           
@@ -494,7 +553,21 @@ if (canvas) {
           if (this.direction === 'left') {
               ctx.scale(-1, 1);
           }
-          ctx.fillText(this.text, -this.size / 2, this.size / 2);
+          
+          if (this.image && this.imageLoaded) {
+              // Draw image fish with slight wobble
+              const wobble = Math.sin(Date.now() / 200 + this.x) * 0.1;
+              ctx.rotate(wobble);
+              
+              const imgWidth = this.size * 2;
+              const imgHeight = (this.image.height / this.image.width) * imgWidth;
+              ctx.drawImage(this.image, -imgWidth / 2, -imgHeight / 2, imgWidth, imgHeight);
+          } else {
+              // Draw emoji fish
+              ctx.font = `${this.size}px sans-serif`;
+              ctx.fillText(this.text, -this.size / 2, this.size / 2);
+          }
+          
           ctx.restore();
       }
     }
@@ -614,8 +687,24 @@ if (canvas) {
         for (let i = 0; i < particleCount; i++) particles.push(new Particle());
 
         fish = [];
-        const fishCount = canvas.width < 768 ? 7 : 15;
-        for (let i = 0; i < fishCount; i++) fish.push(new Fish());
+        const user = firebase.auth().currentUser;
+        let ownedFishIds: string[] = [];
+        if (user) {
+            const profile = getPlayerProfile(user);
+            ownedFishIds = profile.aquariumFish || [];
+        }
+
+        // Add owned fish
+        ownedFishIds.forEach(fishId => {
+            const fishData = FISH_DATA.find(f => f.id === fishId);
+            if (fishData) {
+                fish.push(new Fish(fishData.image));
+            }
+        });
+
+        // Add some default emoji fish if tank is empty or just to have some background life
+        const defaultFishCount = canvas.width < 768 ? 5 : 10;
+        for (let i = 0; i < defaultFishCount; i++) fish.push(new Fish());
 
         bubbles = [];
         const bubbleCount = canvas.width < 768 ? 10: 20;
@@ -669,6 +758,13 @@ if (canvas) {
             ctx.fill();
         }
 
+        for (let i = foods.length - 1; i >= 0; i--) {
+            const food = foods[i];
+            food.update();
+            food.draw();
+            if (food.life <= 0) foods.splice(i, 1);
+        }
+
         particles.forEach(p => { p.update(); p.draw(); });
         bubbles.forEach(b => { b.update(); b.draw(); });
         fish.forEach(f => { f.update(); f.draw(); });
@@ -684,10 +780,10 @@ if (canvas) {
         setupParallax();
         revealMenu(); // Trigger the reveal animation
         window.addEventListener('resize', initCanvas);
+        window.addEventListener('aquarium-updated', initCanvas);
     }
 
     initialize();
     // Move audio settings to Settings modal only (no floating button)
 }
 window.addEventListener('orientationchange', () => window.dispatchEvent(new Event('resize')));
-
