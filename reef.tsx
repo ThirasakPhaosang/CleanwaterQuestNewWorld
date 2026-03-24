@@ -1,8 +1,10 @@
+
 // FIX: Switched to Firebase v8 compatibility imports.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import { PlayerProfile, getPlayerProfile, savePlayerProfile } from './profile-data';
+import audio from './audio';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAAXqmfSy_q_Suh4td5PeLz-ZsuICf-KwI",
@@ -81,6 +83,27 @@ function renderReefUI() {
     // Update reef visualization
     if (reefVisualization) {
         (reefVisualization as HTMLElement).style.setProperty('--health-percent', `${percent}%`);
+        
+        // Animate SVG tree
+        const branches = document.querySelectorAll('.reef-branch');
+        branches.forEach((branch, index) => {
+            const threshold = (index + 1) * (100 / branches.length);
+            if (percent >= threshold) {
+                (branch as SVGPathElement).style.strokeDashoffset = '0';
+            } else {
+                (branch as SVGPathElement).style.strokeDashoffset = '200';
+            }
+        });
+
+        const leaves = document.querySelectorAll('.reef-leaf');
+        leaves.forEach((leaf, index) => {
+            const threshold = (index + 1) * (100 / leaves.length);
+            if (percent >= threshold) {
+                (leaf as SVGCircleElement).style.transform = 'scale(1)';
+            } else {
+                (leaf as SVGCircleElement).style.transform = 'scale(0)';
+            }
+        });
     }
 
     // Update player contribution info
