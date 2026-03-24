@@ -137,6 +137,7 @@ class AudioManager {
       `${prefix}audio/mainmenu/perfect-beauty-191271.mp3`
     ];
     const gameTracks = [
+      `${prefix}audiocoffee-ocean-of-fun-and-joy-129569.mp3`,
       `${prefix}audio/game/beach-fun-2-336147.mp3`,
       `${prefix}audio/game/beach-fun-336146.mp3`,
       `${prefix}audio/game/play-fun-336143.mp3`,
