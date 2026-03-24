@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="leaderboard.css" />
     <link rel="stylesheet" href="redeem.css" />
     <link rel="stylesheet" href="settings.css" />
+    <link rel="stylesheet" href="aquarium.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&family=Poppins:wght@400;600;700&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
@@ -131,6 +132,13 @@
                             <button class="menu-button orbital-button">
                                 <span class="button-icon">🎨</span>
                                 <span class="button-text">ปรับแต่งเรือ</span>
+                            </button>
+                        </div>
+                        <div class="orbital-button-wrapper" data-menu="aquarium">
+                             <div class="tendril"></div>
+                            <button class="menu-button orbital-button">
+                                <span class="button-icon">🐟</span>
+                                <span class="button-text">ตู้ปลา</span>
                             </button>
                         </div>
                     </div>
@@ -395,7 +403,28 @@
             <!-- Wrapper for landscape layout -->
             <div class="reef-visualization-column">
                 <div id="reef-visualization">
-                    <!-- This div will be styled with a gradient that changes based on progress -->
+                    <svg id="reef-tree-svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMax meet">
+                        <!-- Trunk -->
+                        <path id="reef-trunk" d="M 90 200 C 90 150, 80 100, 100 80 C 120 100, 110 150, 110 200 Z" fill="#8B4513" />
+                        <!-- Branches (hidden initially, revealed by progress) -->
+                        <g id="reef-branches" stroke="#8B4513" stroke-width="8" stroke-linecap="round" fill="none">
+                            <path class="reef-branch" d="M 100 120 Q 60 90 40 50" />
+                            <path class="reef-branch" d="M 100 100 Q 140 70 160 30" />
+                            <path class="reef-branch" d="M 95 150 Q 50 130 20 100" />
+                            <path class="reef-branch" d="M 105 140 Q 150 120 180 90" />
+                            <path class="reef-branch" d="M 100 80 Q 100 40 100 10" />
+                        </g>
+                        <!-- Leaves/Corals (hidden initially, scaled by progress) -->
+                        <g id="reef-leaves" fill="#FF7F50">
+                            <circle class="reef-leaf" cx="40" cy="50" r="15" />
+                            <circle class="reef-leaf" cx="160" cy="30" r="20" />
+                            <circle class="reef-leaf" cx="20" cy="100" r="12" />
+                            <circle class="reef-leaf" cx="180" cy="90" r="18" />
+                            <circle class="reef-leaf" cx="100" cy="10" r="25" />
+                            <circle class="reef-leaf" cx="70" cy="70" r="10" />
+                            <circle class="reef-leaf" cx="130" cy="50" r="14" />
+                        </g>
+                    </svg>
                     <div id="reef-milestone-toast" class="hidden"></div>
                 </div>
             </div>
@@ -482,6 +511,25 @@
             </div>
         </div>
     </div>
+    <!-- Aquarium Modal -->
+    <div id="aquarium-overlay" class="hidden">
+        <div id="aquarium-modal">
+            <button id="aquarium-close-btn" class="close-button" aria-label="Close aquarium">&times;</button>
+            <header id="aquarium-header">
+                <h2>🐟 ตู้ปลาของฉัน</h2>
+                <div id="aquarium-player-currency"></div>
+            </header>
+            <div id="aquarium-content">
+                <!-- Fish shop cards will be dynamically injected here -->
+            </div>
+            <footer id="aquarium-footer">
+                <div id="aquarium-eco-tip">
+                    <p>🌱 <strong>Eco Tip:</strong> เลี้ยงปลาเพื่อเพิ่มความมีชีวิตชีวาให้กับท้องทะเล!</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+
     <!-- Login Required Popup -->
     <div id="login-required-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;">
         <div class="popup-dialog" style="max-width:420px">
@@ -517,5 +565,6 @@
     <script type="module" src="leaderboard.tsx"></script>
     <script type="module" src="redeem.tsx"></script>
     <script type="module" src="settings.tsx"></script>
+    <script type="module" src="aquarium.tsx"></script>
 </body>
 </html>
