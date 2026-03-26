@@ -5,6 +5,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import { ensurePlayerProfile } from './firestore';
+import { initAquariumBackground } from './aquarium';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -352,4 +353,5 @@ if (underwaterBg) {
 
 // Initialize authentication
 initializeAuth();
+initAquariumBackground('aquarium-canvas');
 window.addEventListener('orientationchange', () => window.dispatchEvent(new Event('resize')));
