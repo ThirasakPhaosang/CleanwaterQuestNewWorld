@@ -203,15 +203,15 @@ body {
   100% { transform: translateX(0); }
 }
 .wave-1 {
-    animation: wave-flow 12s ease-in-out infinite;
+    animation: wave-flow 24s ease-in-out infinite;
     bottom: -10px;
 }
 .wave-2 {
-    animation: wave-flow 15s ease-in-out infinite reverse;
+    animation: wave-flow 30s ease-in-out infinite reverse;
     bottom: -5px;
 }
 .wave-3 {
-    animation: wave-flow 10s ease-in-out infinite;
+    animation: wave-flow 20s ease-in-out infinite;
 }
 
 
@@ -262,10 +262,10 @@ body {
         rgba(0, 246, 255, 0.05) 52%,
         transparent 57%
     );
-    animation: god-rays 25s linear infinite;
+    animation: god-rays 60s linear infinite;
 }
 .layer-foreground-effects::after {
-    animation-delay: -12s;
+    animation-delay: -30s;
     background: linear-gradient(
         -35deg,
         transparent 48%,
