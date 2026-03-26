@@ -204,8 +204,17 @@ export function getPlayerProfile(user: firebase.User): PlayerProfile {
                     const cloud = doc.data() as any;
                     // Prefer cloud stats/level if newer
                     if (cloud?.updatedAt) {
-                        localStorage.setItem(key, JSON.stringify({ ...profile, ...cloud, uid: user.uid }));
-                        window.dispatchEvent(new CustomEvent('profile-updated'));
+                        let cloudTime = 0;
+                        if (cloud.updatedAt && typeof cloud.updatedAt.toMillis === 'function') {
+                            cloudTime = cloud.updatedAt.toMillis();
+                        } else if (typeof cloud.updatedAt === 'number') {
+                            cloudTime = cloud.updatedAt;
+                        }
+                        
+                        if (cloudTime > (profile.updatedAt || 0)) {
+                            localStorage.setItem(key, JSON.stringify({ ...profile, ...cloud, uid: user.uid }));
+                            window.dispatchEvent(new CustomEvent('profile-updated'));
+                        }
                     }
                 } else {
                     // create cloud doc lazily
@@ -228,12 +237,9 @@ export function savePlayerProfile(profile: PlayerProfile) {
     // Firestore mirror (best effort)
     try {
         const db = firebase.firestore();
-        const { stats, ...rest } = profile as any;
-        // Important: avoid overwriting server-computed aggregates in stats
-        // (weeklyScore, totalScore, bestScore, totals). Let game session writes handle them.
         db.collection('players').doc(profile.uid).set(
             {
-                ...rest,
+                ...profile,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             },
             { merge: true }
