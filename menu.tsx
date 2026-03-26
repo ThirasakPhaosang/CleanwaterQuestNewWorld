@@ -787,4 +787,3 @@ if (canvas) {
     // Move audio settings to Settings modal only (no floating button)
 }
 window.addEventListener('orientationchange', () => window.dispatchEvent(new Event('resize')));
-
