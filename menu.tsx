@@ -300,10 +300,10 @@ if (canvas) {
             this.x = x ?? Math.random() * canvas.width;
             this.y = canvas.height + Math.random() * 100;
             this.radius = Math.random() * 3 + 1;
-            this.speedY = Math.random() * 1.5 + 0.5;
+            this.speedY = Math.random() * 0.5 + 0.2;
             this.opacity = this.radius / 4 * 0.7;
             this.sway = Math.random() * Math.PI * 2;
-            this.swaySpeed = Math.random() * 0.04 - 0.02;
+            this.swaySpeed = Math.random() * 0.02 - 0.01;
             this.brightness = 1;
         }
         update() {
@@ -360,11 +360,11 @@ if (canvas) {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.radius = Math.random() * 2 + 0.5;
-        this.speed = Math.random() * 0.5 + 0.2;
+        this.speed = Math.random() * 0.2 + 0.1;
         this.opacity = Math.random() * 0.5;
         this.opacityDirection = 1;
         this.sway = Math.random() * Math.PI * 2;
-        this.swaySpeed = Math.random() * 0.01 + 0.005;
+        this.swaySpeed = Math.random() * 0.005 + 0.002;
         this.brightness = 1;
       }
 
@@ -476,7 +476,7 @@ if (canvas) {
               const dx = (nearestFood as Food).x - this.x;
               const dy = (nearestFood as Food).y - this.y;
               if (minDist > this.size * 2) {
-                  this.setTargetSpeed(dx / minDist * 5, dy / minDist * 5);
+                  this.setTargetSpeed(dx / minDist * 2.5, dy / minDist * 2.5);
               } else {
                   (nearestFood as Food).life = 0; // Eat food
                   this.setTargetSpeed(0, 0);
@@ -490,7 +490,7 @@ if (canvas) {
               const dy = mouse.y - this.y;
               const dist = Math.sqrt(dx * dx + dy * dy);
               if (dist > this.size * 1.5) { 
-                  this.setTargetSpeed(dx / dist * 2.5, dy / dist * 2.5);
+                  this.setTargetSpeed(dx / dist * 1.5, dy / dist * 1.5);
               } else {
                   this.setTargetSpeed(0, 0); // Linger/nibble when close
               }
@@ -508,8 +508,8 @@ if (canvas) {
                   this.state = 'swimming';
                   const angle = Math.random() * Math.PI * 2;
                   this.setTargetSpeed(
-                      Math.cos(angle) * (0.8 + Math.random() * 0.5),
-                      Math.sin(angle) * (0.8 + Math.random() * 0.5)
+                      Math.cos(angle) * (0.3 + Math.random() * 0.2),
+                      Math.sin(angle) * (0.3 + Math.random() * 0.2)
                   );
                   this.stateTimer = 100 + Math.random() * 200;
               } else {
@@ -524,7 +524,7 @@ if (canvas) {
           this.updateState();
           if (this.brightness > 1) this.brightness -= 0.05;
 
-          const easing = this.state === 'attracted' ? 0.08 : 0.05;
+          const easing = this.state === 'attracted' ? 0.04 : 0.02;
           this.speedX += (this.targetSpeedX - this.speedX) * easing;
           this.speedY += (this.targetSpeedY - this.speedY) * easing;
           
@@ -542,14 +542,14 @@ if (canvas) {
           if(this.state !== 'attracted' && distSqToMouse < 100 * 100) { 
                 const dist = Math.sqrt(distSqToMouse);
                 const force = 1 - dist / 100;
-                this.x += (this.x - mouse.x) / dist * force * 1.5;
-                this.y += (this.y - mouse.y) / dist * force * 1.5;
+                this.x += (this.x - mouse.x) / dist * force * 0.5;
+                this.y += (this.y - mouse.y) / dist * force * 0.5;
           }
 
-          if (this.x < this.size) { this.x = this.size; this.setTargetSpeed(Math.abs(this.targetSpeedX) || 0.5, this.targetSpeedY); }
-          if (this.x > canvas.width - this.size) { this.x = canvas.width - this.size; this.setTargetSpeed(-Math.abs(this.targetSpeedX) || -0.5, this.targetSpeedY); }
-          if (this.y < this.size) { this.y = this.size; this.setTargetSpeed(this.targetSpeedX, Math.abs(this.targetSpeedY) || 0.5); }
-          if (this.y > canvas.height - this.size) { this.y = canvas.height - this.size; this.setTargetSpeed(this.targetSpeedX, -Math.abs(this.targetSpeedY) || -0.5); }
+          if (this.x < this.size) { this.x = this.size; this.setTargetSpeed(Math.abs(this.targetSpeedX) || 0.2, this.targetSpeedY); }
+          if (this.x > canvas.width - this.size) { this.x = canvas.width - this.size; this.setTargetSpeed(-Math.abs(this.targetSpeedX) || -0.2, this.targetSpeedY); }
+          if (this.y < this.size) { this.y = this.size; this.setTargetSpeed(this.targetSpeedX, Math.abs(this.targetSpeedY) || 0.2); }
+          if (this.y > canvas.height - this.size) { this.y = canvas.height - this.size; this.setTargetSpeed(this.targetSpeedX, -Math.abs(this.targetSpeedY) || -0.2); }
       }
 
       draw() {
