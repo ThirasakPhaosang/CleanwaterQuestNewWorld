@@ -62,14 +62,8 @@ auth.onAuthStateChanged((user) => {
     }
   };
   render(local);
-  window.dispatchEvent(new CustomEvent('aquarium-updated'));
   // Realtime cloud updates
-  try { subscribePlayerProfile(user.uid, (p) => {
-      if(p) {
-          render(p);
-          window.dispatchEvent(new CustomEvent('aquarium-updated'));
-      }
-  }); } catch {}
+  try { subscribePlayerProfile(user.uid, (p) => p && render(p)); } catch {}
 });
 
 function setupMenuActions() {
@@ -198,11 +192,11 @@ if (canvas) {
     const mouse = { x: -1000, y: -1000, isDown: false, downStartTime: 0 };
 
     // --- Event Listeners ---
-    canvas.addEventListener('pointerdown', (e) => {
+    canvas.addEventListener('mousedown', (e) => {
         mouse.isDown = true;
         mouse.downStartTime = Date.now();
     });
-    canvas.addEventListener('pointerup', (e) => {
+    canvas.addEventListener('mouseup', (e) => {
         mouse.isDown = false;
         const pressDuration = Date.now() - mouse.downStartTime;
 
@@ -216,13 +210,13 @@ if (canvas) {
         }
     });
 
-    canvas.addEventListener('pointermove', (e) => {
+    canvas.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
         mouse.x = e.clientX - rect.left;
         mouse.y = e.clientY - rect.top;
     });
 
-    canvas.addEventListener('pointerleave', () => {
+    canvas.addEventListener('mouseleave', () => {
         mouse.x = -1000;
         mouse.y = -1000;
         mouse.isDown = false;
@@ -254,8 +248,8 @@ if (canvas) {
     class Food {
       x: number; y: number; size: number; speedY: number; life: number;
       constructor(x: number, y: number) {
-        this.x = x; this.y = y; this.size = 6 + Math.random() * 3;
-        this.speedY = 1.5 + Math.random() * 1;
+        this.x = x; this.y = y; this.size = 3 + Math.random() * 2;
+        this.speedY = 1 + Math.random() * 1;
         this.life = 1;
       }
       update() {
@@ -264,14 +258,12 @@ if (canvas) {
       }
       draw() {
         if (!ctx) return;
-        ctx.save();
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = '#d2691e'; // Chocolate/brown color for fish food
-        ctx.shadowColor = '#8b4513';
-        ctx.shadowBlur = 4;
+        ctx.fillStyle = '#ffcc00';
         ctx.fill();
-        ctx.restore();
+        ctx.shadowColor = '#ffcc00';
+        ctx.shadowBlur = 5;
       }
     }
 
@@ -284,13 +276,11 @@ if (canvas) {
       update() { this.radius += this.speed; this.life -= 0.02; }
       draw() {
         if (!ctx) return;
-        ctx.save();
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(0, 246, 255, ${this.life})`;
         ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.restore();
       }
     }
 
@@ -300,10 +290,10 @@ if (canvas) {
             this.x = x ?? Math.random() * canvas.width;
             this.y = canvas.height + Math.random() * 100;
             this.radius = Math.random() * 3 + 1;
-            this.speedY = Math.random() * 0.5 + 0.2;
+            this.speedY = Math.random() * 1.5 + 0.5;
             this.opacity = this.radius / 4 * 0.7;
             this.sway = Math.random() * Math.PI * 2;
-            this.swaySpeed = Math.random() * 0.02 - 0.01;
+            this.swaySpeed = Math.random() * 0.04 - 0.02;
             this.brightness = 1;
         }
         update() {
@@ -360,11 +350,11 @@ if (canvas) {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.radius = Math.random() * 2 + 0.5;
-        this.speed = Math.random() * 0.2 + 0.1;
+        this.speed = Math.random() * 0.5 + 0.2;
         this.opacity = Math.random() * 0.5;
         this.opacityDirection = 1;
         this.sway = Math.random() * Math.PI * 2;
-        this.swaySpeed = Math.random() * 0.005 + 0.002;
+        this.swaySpeed = Math.random() * 0.01 + 0.005;
         this.brightness = 1;
       }
 
@@ -471,12 +461,12 @@ if (canvas) {
               }
           });
 
-          if (nearestFood && minDist < 800) {
+          if (nearestFood && minDist < 300) {
               this.state = 'attracted';
               const dx = (nearestFood as Food).x - this.x;
               const dy = (nearestFood as Food).y - this.y;
-              if (minDist > this.size * 2) {
-                  this.setTargetSpeed(dx / minDist * 2.5, dy / minDist * 2.5);
+              if (minDist > this.size) {
+                  this.setTargetSpeed(dx / minDist * 3, dy / minDist * 3);
               } else {
                   (nearestFood as Food).life = 0; // Eat food
                   this.setTargetSpeed(0, 0);
@@ -490,7 +480,7 @@ if (canvas) {
               const dy = mouse.y - this.y;
               const dist = Math.sqrt(dx * dx + dy * dy);
               if (dist > this.size * 1.5) { 
-                  this.setTargetSpeed(dx / dist * 1.5, dy / dist * 1.5);
+                  this.setTargetSpeed(dx / dist * 2.5, dy / dist * 2.5);
               } else {
                   this.setTargetSpeed(0, 0); // Linger/nibble when close
               }
@@ -508,8 +498,8 @@ if (canvas) {
                   this.state = 'swimming';
                   const angle = Math.random() * Math.PI * 2;
                   this.setTargetSpeed(
-                      Math.cos(angle) * (0.3 + Math.random() * 0.2),
-                      Math.sin(angle) * (0.3 + Math.random() * 0.2)
+                      Math.cos(angle) * (0.8 + Math.random() * 0.5),
+                      Math.sin(angle) * (0.8 + Math.random() * 0.5)
                   );
                   this.stateTimer = 100 + Math.random() * 200;
               } else {
@@ -524,7 +514,7 @@ if (canvas) {
           this.updateState();
           if (this.brightness > 1) this.brightness -= 0.05;
 
-          const easing = this.state === 'attracted' ? 0.04 : 0.02;
+          const easing = this.state === 'attracted' ? 0.08 : 0.05;
           this.speedX += (this.targetSpeedX - this.speedX) * easing;
           this.speedY += (this.targetSpeedY - this.speedY) * easing;
           
@@ -542,14 +532,14 @@ if (canvas) {
           if(this.state !== 'attracted' && distSqToMouse < 100 * 100) { 
                 const dist = Math.sqrt(distSqToMouse);
                 const force = 1 - dist / 100;
-                this.x += (this.x - mouse.x) / dist * force * 0.5;
-                this.y += (this.y - mouse.y) / dist * force * 0.5;
+                this.x += (this.x - mouse.x) / dist * force * 1.5;
+                this.y += (this.y - mouse.y) / dist * force * 1.5;
           }
 
-          if (this.x < this.size) { this.x = this.size; this.setTargetSpeed(Math.abs(this.targetSpeedX) || 0.2, this.targetSpeedY); }
-          if (this.x > canvas.width - this.size) { this.x = canvas.width - this.size; this.setTargetSpeed(-Math.abs(this.targetSpeedX) || -0.2, this.targetSpeedY); }
-          if (this.y < this.size) { this.y = this.size; this.setTargetSpeed(this.targetSpeedX, Math.abs(this.targetSpeedY) || 0.2); }
-          if (this.y > canvas.height - this.size) { this.y = canvas.height - this.size; this.setTargetSpeed(this.targetSpeedX, -Math.abs(this.targetSpeedY) || -0.2); }
+          if (this.x < this.size) { this.x = this.size; this.setTargetSpeed(Math.abs(this.targetSpeedX) || 0.5, this.targetSpeedY); }
+          if (this.x > canvas.width - this.size) { this.x = canvas.width - this.size; this.setTargetSpeed(-Math.abs(this.targetSpeedX) || -0.5, this.targetSpeedY); }
+          if (this.y < this.size) { this.y = this.size; this.setTargetSpeed(this.targetSpeedX, Math.abs(this.targetSpeedY) || 0.5); }
+          if (this.y > canvas.height - this.size) { this.y = canvas.height - this.size; this.setTargetSpeed(this.targetSpeedX, -Math.abs(this.targetSpeedY) || -0.5); }
       }
 
       draw() {
@@ -797,3 +787,4 @@ if (canvas) {
     // Move audio settings to Settings modal only (no floating button)
 }
 window.addEventListener('orientationchange', () => window.dispatchEvent(new Event('resize')));
+
