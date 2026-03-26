@@ -62,8 +62,14 @@ auth.onAuthStateChanged((user) => {
     }
   };
   render(local);
+  window.dispatchEvent(new CustomEvent('aquarium-updated'));
   // Realtime cloud updates
-  try { subscribePlayerProfile(user.uid, (p) => p && render(p)); } catch {}
+  try { subscribePlayerProfile(user.uid, (p) => {
+      if(p) {
+          render(p);
+          window.dispatchEvent(new CustomEvent('aquarium-updated'));
+      }
+  }); } catch {}
 });
 
 function setupMenuActions() {
@@ -192,11 +198,11 @@ if (canvas) {
     const mouse = { x: -1000, y: -1000, isDown: false, downStartTime: 0 };
 
     // --- Event Listeners ---
-    canvas.addEventListener('mousedown', (e) => {
+    canvas.addEventListener('pointerdown', (e) => {
         mouse.isDown = true;
         mouse.downStartTime = Date.now();
     });
-    canvas.addEventListener('mouseup', (e) => {
+    canvas.addEventListener('pointerup', (e) => {
         mouse.isDown = false;
         const pressDuration = Date.now() - mouse.downStartTime;
 
@@ -210,13 +216,13 @@ if (canvas) {
         }
     });
 
-    canvas.addEventListener('mousemove', (e) => {
+    canvas.addEventListener('pointermove', (e) => {
         const rect = canvas.getBoundingClientRect();
         mouse.x = e.clientX - rect.left;
         mouse.y = e.clientY - rect.top;
     });
 
-    canvas.addEventListener('mouseleave', () => {
+    canvas.addEventListener('pointerleave', () => {
         mouse.x = -1000;
         mouse.y = -1000;
         mouse.isDown = false;
@@ -248,8 +254,8 @@ if (canvas) {
     class Food {
       x: number; y: number; size: number; speedY: number; life: number;
       constructor(x: number, y: number) {
-        this.x = x; this.y = y; this.size = 3 + Math.random() * 2;
-        this.speedY = 1 + Math.random() * 1;
+        this.x = x; this.y = y; this.size = 6 + Math.random() * 3;
+        this.speedY = 1.5 + Math.random() * 1;
         this.life = 1;
       }
       update() {
@@ -258,12 +264,14 @@ if (canvas) {
       }
       draw() {
         if (!ctx) return;
+        ctx.save();
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffcc00';
+        ctx.fillStyle = '#d2691e'; // Chocolate/brown color for fish food
+        ctx.shadowColor = '#8b4513';
+        ctx.shadowBlur = 4;
         ctx.fill();
-        ctx.shadowColor = '#ffcc00';
-        ctx.shadowBlur = 5;
+        ctx.restore();
       }
     }
 
@@ -276,11 +284,13 @@ if (canvas) {
       update() { this.radius += this.speed; this.life -= 0.02; }
       draw() {
         if (!ctx) return;
+        ctx.save();
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(0, 246, 255, ${this.life})`;
         ctx.lineWidth = 2;
         ctx.stroke();
+        ctx.restore();
       }
     }
 
@@ -461,12 +471,12 @@ if (canvas) {
               }
           });
 
-          if (nearestFood && minDist < 300) {
+          if (nearestFood && minDist < 800) {
               this.state = 'attracted';
               const dx = (nearestFood as Food).x - this.x;
               const dy = (nearestFood as Food).y - this.y;
-              if (minDist > this.size) {
-                  this.setTargetSpeed(dx / minDist * 3, dy / minDist * 3);
+              if (minDist > this.size * 2) {
+                  this.setTargetSpeed(dx / minDist * 5, dy / minDist * 5);
               } else {
                   (nearestFood as Food).life = 0; // Eat food
                   this.setTargetSpeed(0, 0);
