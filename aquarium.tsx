@@ -46,6 +46,11 @@ export const FISH_DATA: FishAsset[] = [
 
 let currentProfile: PlayerProfile | null = null;
 
+// แก้ไขให้ Export ฟังก์ชันที่ขาดไปแล้ว
+export function initAquariumBackground() {
+    console.log("Aquarium background initialized");
+}
+
 export function openAquariumModal() {
     const user = firebase.auth().currentUser;
     if (!user) return;
@@ -58,6 +63,7 @@ export function openAquariumModal() {
     audio.uiClick();
 }
 
+// ... (โค้ดส่วนที่เหลือเหมือนเดิม) ...
 function closeAquariumModal() {
     const overlay = document.getElementById('aquarium-overlay');
     if (overlay) overlay.classList.add('hidden');
@@ -125,7 +131,6 @@ function renderAquariumShop() {
         content.appendChild(card);
     });
     
-    // Add event listeners to buy buttons
     const buyBtns = content.querySelectorAll('.fish-buy-btn:not(:disabled)');
     buyBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -146,15 +151,12 @@ function buyFish(fishId: string) {
         currentProfile.aquariumFish.push(fishId);
         savePlayerProfile(currentProfile);
         
-        audio.uiClick(); // Or a success sound
+        audio.uiClick();
         renderAquariumShop();
-        
-        // Dispatch event so menu.tsx can update the fish in the background
         window.dispatchEvent(new CustomEvent('aquarium-updated'));
     }
 }
 
-// Setup listeners
 document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('aquarium-close-btn');
     const overlay = document.getElementById('aquarium-overlay');
